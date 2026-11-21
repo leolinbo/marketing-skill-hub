@@ -29,14 +29,17 @@
 
 ### 方式一：双击启动 (推荐)
 直接在资源管理器中双击运行：
-👉 `d:\marketing\tools\auto_trade_mail\run.bat`
+👉 `d:\marketing\tools\auto_trade_mail\run.bat` (仅本地访问)
+👉 `d:\marketing\tools\auto_trade_mail\run_with_cloudflare.bat` (本地 + Cloudflare 全球公网访问)
 
-浏览器将自动打开 Web 控制面板：`http://127.0.0.1:8765`。
+浏览器打开 Web 控制面板：`http://127.0.0.1:8765` 或 Cloudflare 提供的公网 HTTPS 链接。
 
 ### 方式二：命令行启动
 ```bash
 cd d:\marketing\tools\auto_trade_mail
 python server.py
+# 若需要公网访问，同时运行：
+.\cloudflared.exe tunnel --protocol http2 --url http://localhost:8765
 ```
 
 ### 方式三：CLI 无界面直接调用
