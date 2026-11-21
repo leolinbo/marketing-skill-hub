@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Trade Mail - 自动化外贸邮件工作站</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .badge { padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- 顶部导航 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md">
+          <i class="fa-solid fa-paper-plane text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight">Auto Trade Mail</h1>
+          <p class="text-xs text-slate-500">外贸自动化发信与生命周期跟进系统 (marketing 规范版)</p>
+        </div>
+      </div>
+      
+      <!-- 导航标签 -->
+      <nav class="flex space-x-1 sm:space-x-2">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-brand-600 bg-brand-50 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie"></i> 概览大盘
+        </button>
+        <button onclick="switchTab('leads')" id="nav-leads" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-users"></i> 客户线索
+        </button>
+        <button onclick="switchTab('mailboxes')" id="nav-mailboxes" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-envelope-open-text"></i> 发件箱池
+        </button>
+        <button onclick="switchTab('sequences')" id="nav-sequences" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-route"></i> 跟进序列
+        </button>
+        <button onclick="switchTab('campaign')" id="nav-campaign" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-bolt text-amber-500"></i> 发信调度
+        </button>
+        <button onclick="switchTab('warmup')" id="nav-warmup" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-fire text-amber-500"></i> 邮箱预热
+        </button>
+        <button onclick="switchTab('suppression')" id="nav-suppression" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-ban text-rose-500"></i> 黑名单/退订
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- 1. 概览大盘 (Dashboard) -->
+    <div id="view-dashboard" class="space-y-6">
+      <!-- 核心指标卡 -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">总线索名单</div>
+          <div class="text-3xl font-extrabold text-slate-900 mt-2" id="stat-total-leads">-</div>
+          <div class="mt-2 text-xs text-slate-500 flex items-center gap-1">
+            <span class="text-emerald-600 font-semibold" id="stat-active-leads">-</span> 位处于跟进活跃态
+          </div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">今日发送量 / 每日配额</div>
+          <div class="text-3xl font-extrabold text-slate-900 mt-2" id="stat-sent-today">-</div>
+          <div class="mt-2 text-xs text-slate-500">安全限额单邮箱 ≤ 25 封/天</div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">客户正向回复</div>
+          <div class="text-3xl font-extrabold text-emerald-600 mt-2" id="stat-replied">-</div>
+          <div class="mt-2 text-xs text-slate-500">自动停止后续推销序列</div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">退订与黑名单</div>
+          <div class="text-3xl font-extrabold text-slate-600 mt-2" id="stat-suppressed">-</div>
+          <div class="mt-2 text-xs text-slate-500">全局强拦截保护域名信用</div>
+        </div>
+      </div>
+
+      <!-- 合规与外贸技能指引 -->
+      <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="badge bg-sky-100 text-sky-800">marketing 规范实践</span>
+            <h3 class="font-bold text-slate-800">冷邮件发信安全与进箱率守则</h3>
+          </div>
+          <p class="text-sm text-slate-600">
+            • 始终使用独立副域名发送开发信，保护主站声誉；<br>
+            • 单邮箱日发量逐步放量（0 → 15 → 25 封），每封间隔 30~60 秒随机抖动；<br>
+            • 首封不放营销大图与外部链接，优先纯文本，提高进入欧美企业 Primary 收件箱概率。
+          </p>
+        </div>
+        <div class="flex-shrink-0">
+          <button onclick="switchTab('campaign')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow transition">
+            <i class="fa-solid fa-play mr-1"></i> 发起一键跟进
+          </button>
+        </div>
+      </div>
+
+      <!-- 发信日志预览 -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> 最近发信记录
+          </h3>
+          <button onclick="loadLogs()" class="text-xs text-brand-600 hover:underline">刷新</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-700 font-semibold border-b">
+              <tr>
+                <th class="py-2.5 px-3">时间</th>
+                <th class="py-2.5 px-3">收件客户</th>
+                <th class="py-2.5 px-3">发件邮箱</th>
+                <th class="py-2.5 px-3">阶段</th>
+                <th class="py-2.5 px-3">主题</th>
+                <th class="py-2.5 px-3">状态</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-logs-tbody">
+              <tr><td colspan="6" class="text-center py-4 text-slate-400">暂无日志</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 客户线索管理 (Leads) -->
+    <div id="view-leads" class="hidden space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="lead-search" oninput="loadLeads()" placeholder="搜索客户、公司、邮箱..." class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <select id="lead-status-filter" onchange="loadLeads()" class="py-1.5 px-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <option value="">所有状态</option>
+            <option value="active">活跃跟进中</option>
+            <option value="replied">已回复</option>
+            <option value="unsubscribed">已退订</option>
+            <option value="bounced">退信无效</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="showImportModal()" class="px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-lg flex items-center gap-1.5">
+            <i class="fa-solid fa-file-import text-brand-600"></i> 批量导入 CSV
+          </button>
+          <button onclick="showAddLeadModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-user-plus"></i> 新增客户
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-700 font-semibold border-b">
+              <tr>
+                <th class="py-3 px-4">联系人与公司</th>
+                <th class="py-3 px-4">邮箱</th>
+                <th class="py-3 px-4">国家/类型</th>
+                <th class="py-3 px-4">当前阶段</th>
+                <th class="py-3 px-4">最后联系</th>
+                <th class="py-3 px-4">状态</th>
+                <th class="py-3 px-4 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody" class="divide-y divide-slate-100 text-slate-600">
+              <tr><td colspan="7" class="text-center py-6 text-slate-400">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 发件箱管理 (Mailboxes) -->
+    <div id="view-mailboxes" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="font-bold text-slate-900">发件箱资源池 (Mailbox Pool)</h2>
+          <p class="text-xs text-slate-500">支持配置多个发件邮箱轮询发送，自动避开单邮箱超额被限风险。</p>
+        </div>
+        <button onclick="showAddMailboxModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> 添加发件邮箱
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="mailboxes-container">
+        <!-- 动态加载发件箱卡片 -->
+      </div>
+    </div>
+
+    <!-- 4. 跟进序列 (Sequences) -->
+    <div id="view-sequences" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+        <div>
+          <h2 class="font-bold text-slate-900">自动化外贸跟进序列 (4-Step Outreach Matrix)</h2>
+          <p class="text-xs text-slate-500">遵循营销规范的最佳实践，多阶段梯度推送、同主题追加跟进。</p>
+        </div>
+        <div class="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+          支持变量: <code class="text-brand-600">{first_name}</code> <code class="text-brand-600">{company}</code> <code class="text-brand-600">{country}</code> <code class="text-brand-600">{custom_note}</code>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 序列阶段列表 -->
+        <div class="space-y-3" id="sequence-list-container">
+          <!-- 动态渲染阶段卡片 -->
+        </div>
+
+        <!-- 模版编辑与即时渲染效果 -->
+        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="font-bold text-slate-900 text-base" id="edit-seq-title">编辑阶段模版</h3>
+            <button onclick="saveSequenceTemplate()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">
+              <i class="fa-solid fa-check mr-1"></i> 保存模版
+            </button>
+          </div>
+          <input type="hidden" id="edit-seq-id">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">跟进间隔天数 (与上封邮件最小间隔)</label>
+            <input type="number" id="edit-seq-delay" class="w-32 px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">邮件主题 (Subject)</label>
+            <input type="text" id="edit-seq-subject" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">邮件正文 (Body)</label>
+            <textarea id="edit-seq-body" rows="10" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono leading-relaxed"></textarea>
+          </div>
+
+          <!-- 即时预览区域 -->
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-eye text-brand-600"></i> 真实效果即时预览 (Live Preview)
+              </h4>
+              <button onclick="fetchPreview()" class="text-xs text-brand-600 hover:underline">换个客户预览</button>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-2">
+              <div><strong class="text-slate-500">收件人:</strong> <span id="preview-recipient" class="font-mono text-slate-800"></span></div>
+              <div><strong class="text-slate-500">渲染主题:</strong> <span id="preview-subject" class="font-semibold text-slate-900"></span></div>
+              <div class="border-t border-slate-200 pt-2 text-slate-700 whitespace-pre-wrap font-sans text-xs" id="preview-body"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 发信调度执行器 (Campaign Runner) -->
+    <div id="view-campaign" class="hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">外贸自动化发信调度中心</h2>
+          <p class="text-xs text-slate-500">选择要推送的跟进阶段，系统将自动匹配符合间隔天数要求的客户，并严格按安全延迟排队发送。</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2">1. 选择发信阶段</label>
+            <select id="campaign-step-select" onchange="checkEligibleLeads()" class="w-full p-2 text-xs border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-brand-500">
+              <option value="1">Step 1: 价值锚定与测样提议 (首封)</option>
+              <option value="2">Step 2: 补充细节与打消顾虑 (第3天跟进)</option>
+              <option value="3">Step 3: 提供高价值方案/避免断货 (第7天跟进)</option>
+              <option value="4">Step 4: 礼貌收尾 Break-up (第14天关闭)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2">2. 选择运行模式</label>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer">
+                <input type="radio" name="campaign-mode" value="dry_run" checked class="text-brand-600">
+                <div>
+                  <span class="font-bold text-slate-800">【安全演练 Dry-Run】</span>
+                  <div class="text-[11px] text-slate-500">模拟全流程与变量渲染，不发真实邮件</div>
+                </div>
+              </label>
+              <label class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer">
+                <input type="radio" name="campaign-mode" value="live" class="text-brand-600">
+                <div>
+                  <span class="font-bold text-rose-600">【正式安全发送 LIVE】</span>
+                  <div class="text-[11px] text-slate-500">通过真实发件箱轮询外发（附随机防风控间隔）</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2">3. 阶段合格客户数</label>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+              <div class="text-2xl font-bold text-brand-600" id="eligible-count">0</div>
+              <div class="text-[11px] text-slate-500 mt-1" id="eligible-desc">正在检查合格线索...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="btn-start-campaign" onclick="startCampaign()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-md flex items-center gap-2">
+            <i class="fa-solid fa-play"></i> 启动发信任务
+          </button>
+          <button id="btn-stop-campaign" onclick="stopCampaign()" class="hidden px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-lg shadow-md flex items-center gap-2">
+            <i class="fa-solid fa-stop"></i> 停止当前任务
+          </button>
+        </div>
+
+        <!-- 实时执行状态面板 -->
+        <div id="campaign-progress-panel" class="hidden bg-slate-900 text-slate-100 p-5 rounded-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm font-semibold">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              任务执行中: <span id="campaign-curr-lead" class="font-mono text-xs text-sky-300"></span>
+            </div>
+            <div class="text-xs text-slate-400">
+              成功: <span id="campaign-succ" class="text-emerald-400 font-bold">0</span> | 
+              失败: <span id="campaign-fail" class="text-rose-400 font-bold">0</span> | 
+              跳过: <span id="campaign-skip" class="text-amber-400 font-bold">0</span>
+            </div>
+          </div>
+
+          <!-- 进度条 -->
+          <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+            <div id="campaign-progressbar" class="bg-gradient-to-r from-sky-400 to-brand-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+
+          <!-- 日志终端 -->
+          <div class="bg-black/50 p-3 rounded-lg border border-slate-800 font-mono text-[11px] h-48 overflow-y-auto space-y-1" id="campaign-log-terminal">
+            <!-- 实时滚动日志 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 邮箱预热与养号模块 (Warm-up Engine) -->
+    <div id="view-warmup" class="hidden space-y-6">
+      <!-- 预热指导横幅 -->
+      <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl flex-shrink-0">
+            <i class="fa-solid fa-fire"></i>
+          </div>
+          <div class="space-y-1">
+            <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              自动化邮箱预热与健康养号 (Email Warm-up)
+              <span class="badge bg-amber-100 text-amber-800 text-[11px]">防进垃圾箱核心利器</span>
+            </h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <b>为什么需要预热？</b> 新创建或近期发信量较少的邮箱，若突然向陌生海外买家大量发信，Google 和企业邮件系统（如 Outlook/Proofpoint）容易判定为可疑垃圾群发，直接拦截或进垃圾箱。<br>
+              <b>养号工作原理：</b> 系统自动使用您启用的发件箱，向您自己的真实日常邮箱轮流发送自然商务日常邮件，并严格保持模拟真人的随机时间抖动（25~45 秒）。<br>
+              <span class="text-amber-800 font-semibold">💡 核心养号技巧：收到预热邮件后，请随手在您的日常邮箱点击阅读、标星、或者简单回复一句（例如“Got it, thanks!”），各大邮件服务商将火速将您的发件箱标记为「高信誉白名单真人伙伴」，从此稳进主收件箱！</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 左侧：参数与目标邮箱配置 -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-900 text-sm border-b pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-brand-600"></i> 预热参数配置
+          </h3>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block font-semibold text-slate-700 text-xs">接收预热的真实日常邮箱 *</label>
+              <span class="text-[10px] text-slate-400">一行一个</span>
+            </div>
+            <textarea id="warmup-targets" rows="5" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="输入接收预热的邮箱，每行一个">sales21@encore-tech.com
+jklvbn598j90@gmail.com
+3348573505@qq.com
+2912281722@qq.com</textarea>
+            <p class="text-[11px] text-slate-500 mt-1">
+              已为您默认预置您指定的 4 个常用邮箱（覆盖企业邮、Gmail、QQ邮箱不同网关）。
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 text-xs mb-1">每箱发送封数</label>
+              <select id="warmup-count-per-box" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white">
+                <option value="1">1 封 (轻量试温)</option>
+                <option value="2" selected>2 封 (推荐平衡)</option>
+                <option value="3">3 封 (充分预热)</option>
+                <option value="4">4 封 (深度养号)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 text-xs mb-1">模拟真人间隔</label>
+              <select id="warmup-delay-preset" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white">
+                <option value="quick">25 ~ 40 秒 (默认推荐)</option>
+                <option value="careful">40 ~ 70 秒 (高谨慎度)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 text-xs mb-1">当前参与预热的发件箱池</label>
+            <div id="warmup-active-boxes" class="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600 font-mono space-y-1">
+              正在加载发件箱...
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="startWarmupTask()" id="btn-start-warmup" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-sm rounded-lg shadow transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-fire"></i> 开始自动化预热养号
+            </button>
+            <button onclick="stopWarmupTask()" id="btn-stop-warmup" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-lg shadow transition hidden flex items-center justify-center gap-2">
+              <i class="fa-solid fa-stop"></i> 停止预热任务
+            </button>
+          </div>
+        </div>
+
+        <!-- 右侧：执行监视器与终端日志 -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-xl p-5 border border-slate-800 shadow-md text-white flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-slate-500" id="warmup-status-dot"></span>
+                <span class="font-bold text-sm text-slate-200" id="warmup-status-text">待命就绪 (Idle)</span>
+              </div>
+              <div class="text-xs text-slate-400 font-mono">
+                总计: <span id="warmup-total" class="text-white font-bold">0</span> | 
+                已发送: <span id="warmup-processed" class="text-sky-400 font-bold">0</span> | 
+                成功: <span id="warmup-success" class="text-emerald-400 font-bold">0</span> | 
+                失败: <span id="warmup-fail" class="text-rose-400 font-bold">0</span>
+              </div>
+            </div>
+
+            <!-- 当前操作 -->
+            <div class="text-xs text-slate-300 font-mono flex items-center gap-2 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700">
+              <i class="fa-solid fa-paper-plane text-amber-400"></i>
+              <span>当前动作: </span>
+              <span id="warmup-current-action" class="text-amber-200 font-medium">无运行中的任务</span>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+              <div id="warmup-progressbar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <!-- 实时日志终端 -->
+            <div class="bg-black/60 p-3 rounded-lg border border-slate-800 font-mono text-[11px] h-64 overflow-y-auto space-y-1.5" id="warmup-log-terminal">
+              <div class="text-slate-500">// 准备就绪。点击左侧“开始自动化预热养号”即可启动。</div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/80">
+            <span>🛡️ 全自动模拟人类商务间隔与语料，安全零封号风险</span>
+            <button onclick="clearWarmupLogs()" class="hover:text-slate-200 underline">清空屏幕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="view-suppression" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h2 class="font-bold text-slate-900">退订名单与全局黑名单 (Suppression List)</h2>
+          <p class="text-xs text-slate-500">凡是退订或要求不要跟进的邮箱均在此强拦截，绝不二次骚扰，严格符合 CAN-SPAM 及 GDPR 规范。</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="email" id="suppress-input-email" placeholder="输入要屏蔽的邮箱..." class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+          <button onclick="addSuppressionEmail()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-sm">
+            <i class="fa-solid fa-plus mr-1"></i> 加入黑名单
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-700 font-semibold border-b">
+            <tr>
+              <th class="py-3 px-4">屏蔽邮箱</th>
+              <th class="py-3 px-4">原因 / 来源</th>
+              <th class="py-3 px-4">添加时间</th>
+              <th class="py-3 px-4 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="suppression-tbody" class="divide-y divide-slate-100 text-slate-600">
+            <tr><td colspan="4" class="text-center py-6 text-slate-400">暂无黑名单记录</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 模态框：批量导入 CSV -->
+  <div id="modal-import" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-slate-900">批量导入客户名单 (CSV)</h3>
+        <button onclick="hideImportModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        请粘贴 CSV 格式文本（第一行为表头，支持 <code>email,first_name,company,country,custom_note</code> 等中英文字段）：
+      </p>
+      <textarea id="import-csv-text" rows="8" class="w-full p-3 text-xs border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="email,first_name,company,country,custom_note
+buyer@client.com,David,Global Light,Germany,Observed your high-end project in Berlin."></textarea>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="hideImportModal()" class="px-3 py-1.5 border border-slate-300 text-slate-700 text-xs rounded-lg">取消</button>
+        <button onclick="submitImportCSV()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">开始导入并清洗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框：新增线索 -->
+  <div id="modal-add-lead" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-slate-900">手动新增客户线索</h3>
+        <button onclick="hideAddLeadModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">邮箱 *</label>
+          <input type="email" id="new-lead-email" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">联系人姓名</label>
+            <input type="text" id="new-lead-name" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">公司名称</label>
+            <input type="text" id="new-lead-company" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">国家 / 市场</label>
+            <input type="text" id="new-lead-country" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">分类/行业</label>
+            <input type="text" id="new-lead-cat" value="Architectural Lighting" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">个性化观察细节 (Custom Note)</label>
+          <input type="text" id="new-lead-note" placeholder="例如：注意到贵司展厅新上了高端48V磁吸系列" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="hideAddLeadModal()" class="px-3 py-1.5 border border-slate-300 text-slate-700 text-xs rounded-lg">取消</button>
+        <button onclick="submitAddLead()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">保存线索</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框：添加发件箱 -->
+  <div id="modal-add-mailbox" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-slate-900">配置新发件邮箱 (SMTP)</h3>
+        <button onclick="hideAddMailboxModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">常用服务商一键填充</label>
+          <select id="new-box-preset" onchange="applyMailboxPreset('new')" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg bg-sky-50 text-slate-700 font-medium focus:ring-2 focus:ring-brand-500">
+            <option value="">-- 手动输入 或 点击选择预设 --</option>
+            <option value="gmail">Google Gmail (smtp.gmail.com:587 STARTTLS)</option>
+            <option value="outlook">Microsoft Outlook (smtp.office365.com:587 STARTTLS)</option>
+            <option value="tencent">腾讯企业邮 (smtp.exmail.qq.com:465 SSL)</option>
+            <option value="163">网易企业邮 (smtphm.qiye.163.com:465 SSL)</option>
+            <option value="aliyun">阿里云企业邮 (smtp.qiye.aliyun.com:465 SSL)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">发件邮箱 *</label>
+          <input type="email" id="new-box-email" oninput="autoFillUsername('new')" placeholder="sales@your-domain.com" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">发件人显示姓名 *</label>
+          <input type="text" id="new-box-name" placeholder="Bob / Encore Technical Sales" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">SMTP 主机 *</label>
+            <input type="text" id="new-box-host" placeholder="smtp.gmail.com" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">端口 *</label>
+            <input type="number" id="new-box-port" value="587" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">加密协议</label>
+            <select id="new-box-ssl" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+              <option value="starttls">STARTTLS (推荐 587)</option>
+              <option value="ssl">SSL (推荐 465)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">每日安全发送上限</label>
+            <input type="number" id="new-box-limit" value="25" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">SMTP 登录账号 *</label>
+          <input type="text" id="new-box-user" placeholder="一般同发件邮箱" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">SMTP 密码 / 授权码 *</label>
+          <input type="password" id="new-box-pass" placeholder="支持自动过滤空格，直接粘贴即可" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+        </div>
+      </div>
+      <div class="flex justify-between items-center pt-2 border-t">
+        <button onclick="testCurrentMailboxModal()" id="btn-modal-test" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
+          <i class="fa-solid fa-plug mr-1"></i> 测试连通性
+        </button>
+        <div class="flex gap-2">
+          <button onclick="hideAddMailboxModal()" class="px-3 py-1.5 border border-slate-300 text-slate-700 text-xs rounded-lg">取消</button>
+          <button onclick="submitAddMailbox()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">保存发信箱</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模态框：编辑发件箱 -->
+  <div id="modal-edit-mailbox" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-brand-600"></i> 编辑修改发件箱
+        </h3>
+        <button onclick="hideEditMailboxModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="edit-box-id">
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">发件邮箱 (不可更改)</label>
+          <input type="email" id="edit-box-email" readonly class="w-full px-3 py-1.5 border border-slate-200 bg-slate-100 rounded-lg text-slate-500 font-mono">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">发件人显示姓名 *</label>
+          <input type="text" id="edit-box-name" placeholder="Bob / Encore Technical Sales" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">SMTP 主机 *</label>
+            <input type="text" id="edit-box-host" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">端口 *</label>
+            <input type="number" id="edit-box-port" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">加密协议</label>
+            <select id="edit-box-ssl" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+              <option value="starttls">STARTTLS</option>
+              <option value="ssl">SSL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">每日安全上限</label>
+            <input type="number" id="edit-box-limit" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">SMTP 登录账号 *</label>
+          <input type="text" id="edit-box-user" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">更新密码 / 授权码 (若不修改请留空)</label>
+          <input type="password" id="edit-box-pass" placeholder="留空表示保持原有密码不变" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg font-mono">
+        </div>
+        <div>
+          <label class="flex items-center gap-2 cursor-pointer pt-1">
+            <input type="checkbox" id="edit-box-active" class="rounded text-brand-600">
+            <span class="font-semibold text-slate-700">启用该发件箱 (参与轮询发信)</span>
+          </label>
+        </div>
+      </div>
+      <div class="flex justify-between items-center pt-2 border-t">
+        <button onclick="testEditMailboxModal()" id="btn-modal-edit-test" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
+          <i class="fa-solid fa-plug mr-1"></i> 测试连通性
+        </button>
+        <div class="flex gap-2">
+          <button onclick="hideEditMailboxModal()" class="px-3 py-1.5 border border-slate-300 text-slate-700 text-xs rounded-lg">取消</button>
+          <button onclick="submitEditMailbox()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">保存修改</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let sequencesData = [];
+    let mailboxesCache = [];
+    let campaignPollTimer = null;
+    let warmupPollTimer = null;
+
+    // 切换 Tab
+    function switchTab(tab) {
+      const views = ['dashboard', 'leads', 'mailboxes', 'sequences', 'campaign', 'warmup', 'suppression'];
+      views.forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        const nav = document.getElementById(`nav-${v}`);
+        nav.classList.remove('text-brand-600', 'bg-brand-50');
+        nav.classList.add('text-slate-600');
+      });
+
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tab}`);
+      activeNav.classList.remove('text-slate-600');
+      activeNav.classList.add('text-brand-600', 'bg-brand-50');
+
+      if (tab === 'dashboard') { loadDashboard(); loadLogs(); }
+      else if (tab === 'leads') { loadLeads(); }
+      else if (tab === 'mailboxes') { loadMailboxes(); }
+      else if (tab === 'sequences') { loadSequences(); }
+      else if (tab === 'campaign') { checkEligibleLeads(); checkCampaignStatus(); }
+      else if (tab === 'warmup') { checkWarmupStatus(); }
+      else if (tab === 'suppression') { loadSuppression(); }
+    }
+
+    // 1. Dashboard 数据加载
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/dashboard');
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+          document.getElementById('stat-total-leads').innerText = d.total_leads;
+          document.getElementById('stat-active-leads').innerText = d.active_leads;
+          document.getElementById('stat-sent-today').innerText = d.sent_today;
+          document.getElementById('stat-replied').innerText = d.replied_leads;
+          document.getElementById('stat-suppressed').innerText = d.suppressed_count;
+        }
+      } catch (e) {
+        console.error('Failed to load dashboard:', e);
+      }
+    }
+
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/logs?limit=8');
+        const json = await res.json();
+        const tbody = document.getElementById('dashboard-logs-tbody');
+        if (json.success && json.data.length > 0) {
+          tbody.innerHTML = json.data.map(log => `
+            <tr class="hover:bg-slate-50 border-b border-slate-100">
+              <td class="py-2.5 px-3 font-mono text-slate-500">${log.sent_at.split(' ')[1] || log.sent_at}</td>
+              <td class="py-2.5 px-3 font-medium text-slate-800">${log.lead_email}</td>
+              <td class="py-2.5 px-3 text-slate-500">${log.mailbox_email || '-'}</td>
+              <td class="py-2.5 px-3"><span class="badge bg-sky-50 text-sky-700">Step ${log.step_number}</span></td>
+              <td class="py-2.5 px-3 max-w-xs truncate text-slate-600" title="${log.subject}">${log.subject}</td>
+              <td class="py-2.5 px-3">
+                ${log.status === 'success' ? '<span class="badge bg-emerald-100 text-emerald-800">已成功送达</span>' : 
+                  log.status === 'dry_run' ? '<span class="badge bg-indigo-100 text-indigo-800">演练验证通过</span>' : 
+                  `<span class="badge bg-rose-100 text-rose-800" title="${log.error_message}">发送失败</span>`}
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">暂无日志</td></tr>';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 2. Leads 管理
+    async function loadLeads() {
+      const search = document.getElementById('lead-search').value;
+      const status = document.getElementById('lead-status-filter').value;
+      const res = await fetch(`/api/leads?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`);
+      const json = await res.json();
+      const tbody = document.getElementById('leads-tbody');
+      if (json.success && json.data.length > 0) {
+        tbody.innerHTML = json.data.map(lead => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900">${lead.first_name || '未知联系人'}</div>
+              <div class="text-[11px] text-slate-500">${lead.company || '-'} ${lead.title ? '· ' + lead.title : ''}</div>
+            </td>
+            <td class="py-3 px-4 font-mono text-slate-700">${lead.email}</td>
+            <td class="py-3 px-4">
+              <div>${lead.country || '-'}</div>
+              <div class="text-[11px] text-slate-400">${lead.category}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="badge ${lead.current_step > 0 ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-600'}">
+                ${lead.current_step === 0 ? '未发信 (Step 0)' : '已发 Step ' + lead.current_step}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">${lead.last_sent_at || '从不'}</td>
+            <td class="py-3 px-4">
+              ${lead.status === 'active' ? '<span class="badge bg-emerald-100 text-emerald-800">活跃跟进</span>' :
+                lead.status === 'replied' ? '<span class="badge bg-blue-100 text-blue-800">已回复</span>' :
+                lead.status === 'unsubscribed' ? '<span class="badge bg-slate-200 text-slate-700">已退订</span>' :
+                '<span class="badge bg-rose-100 text-rose-800">' + lead.status + '</span>'}
+            </td>
+            <td class="py-3 px-4 text-right space-x-1">
+              <button onclick="updateLeadStatus(${lead.id}, 'replied')" title="标记客户已回复" class="p-1 hover:text-emerald-600"><i class="fa-solid fa-reply"></i></button>
+              <button onclick="updateLeadStatus(${lead.id}, 'unsubscribed')" title="客户退订加入黑名单" class="p-1 hover:text-amber-600"><i class="fa-solid fa-ban"></i></button>
+              <button onclick="deleteLead(${lead.id})" title="删除" class="p-1 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-400">暂无符合条件的客户</td></tr>';
+      }
+    }
+
+    async function updateLeadStatus(id, status) {
+      await fetch('/api/leads/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      });
+      loadLeads();
+      loadDashboard();
+    }
+
+    async function deleteLead(id) {
+      if (confirm('确定删除该线索？')) {
+        await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+        loadLeads();
+        loadDashboard();
+      }
+    }
+
+    function showImportModal() { document.getElementById('modal-import').classList.remove('hidden'); }
+    function hideImportModal() { document.getElementById('modal-import').classList.add('hidden'); }
+
+    async function submitImportCSV() {
+      const text = document.getElementById('import-csv-text').value;
+      if (!text.trim()) return alert('请输入 CSV 内容');
+      const res = await fetch('/api/leads/import-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv_text: text })
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert(`导入完成！新增: ${json.data.inserted}, 更新: ${json.data.updated}, 跳过退订黑名单: ${json.data.skipped_suppressed}`);
+        hideImportModal();
+        loadLeads();
+        loadDashboard();
+      } else {
+        alert('导入失败: ' + json.error);
+      }
+    }
+
+    function showAddLeadModal() { document.getElementById('modal-add-lead').classList.remove('hidden'); }
+    function hideAddLeadModal() { document.getElementById('modal-add-lead').classList.add('hidden'); }
+
+    async function submitAddLead() {
+      const email = document.getElementById('new-lead-email').value;
+      if (!email) return alert('请填写邮箱');
+      const body = {
+        email,
+        first_name: document.getElementById('new-lead-name').value,
+        company: document.getElementById('new-lead-company').value,
+        country: document.getElementById('new-lead-country').value,
+        category: document.getElementById('new-lead-cat').value,
+        custom_note: document.getElementById('new-lead-note').value
+      };
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if (json.success) {
+        hideAddLeadModal();
+        loadLeads();
+        loadDashboard();
+      } else {
+        alert('保存失败: ' + json.error);
+      }
+    }
+
+    // 3. 发件箱管理
+    async function loadMailboxes() {
+      const res = await fetch('/api/mailboxes');
+      const json = await res.json();
+      const container = document.getElementById('mailboxes-container');
+      if (json.success && json.data.length > 0) {
+        mailboxesCache = json.data;
+        container.innerHTML = json.data.map(b => `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="badge ${b.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">
+                ${b.is_active ? '活跃中' : '已暂停'}
+              </span>
+              <div class="flex items-center gap-2">
+                <button onclick="openEditMailbox(${b.id})" class="text-slate-500 hover:text-brand-600 text-xs flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i> 编辑
+                </button>
+                <button onclick="deleteMailbox(${b.id})" class="text-slate-400 hover:text-rose-600 text-xs" title="删除"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div>
+              <div class="font-bold text-slate-900 text-sm truncate" title="${b.email}">${b.email}</div>
+              <div class="text-xs text-slate-500">${b.sender_name}</div>
+            </div>
+            <div class="text-[11px] text-slate-500 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <div><strong>SMTP 主机:</strong> ${b.smtp_host}:${b.smtp_port} (${b.ssl_mode})</div>
+              <div><strong>今日已发:</strong> ${b.sent_today} / 上限 ${b.daily_limit} 封</div>
+            </div>
+            <button onclick="testMailbox(${b.id}, this)" class="w-full py-1.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-plug text-brand-600"></i> 测试 SMTP 连接
+            </button>
+          </div>
+        `).join('');
+      } else {
+        mailboxesCache = [];
+        container.innerHTML = `
+          <div class="col-span-3 text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+            <i class="fa-solid fa-inbox text-slate-300 text-4xl mb-3"></i>
+            <p class="text-sm text-slate-500 font-medium">尚未配置发件邮箱</p>
+            <p class="text-xs text-slate-400 mt-1">添加您的 Gmail、企业邮箱或海外专有发信域名 SMTP</p>
+            <button onclick="showAddMailboxModal()" class="mt-4 px-4 py-2 bg-brand-600 text-white text-xs font-semibold rounded-lg">立即添加发件箱</button>
+          </div>
+        `;
+      }
+    }
+
+    async function testMailbox(id, btn) {
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-brand-600"></i> 正在连接服务器...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/mailboxes/test-by-id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const json = await res.json();
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+        if (json.success) {
+          alert('✅ SMTP 连通性测试通过！该邮箱可正常发信。\n\n' + json.message);
+        } else {
+          alert('❌ SMTP 连接失败：\n\n' + json.message);
+        }
+      } catch (e) {
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+        alert('测试请求异常: ' + e.message);
+      }
+    }
+
+    function applyMailboxPreset(prefix) {
+      const preset = document.getElementById(`${prefix}-box-preset`).value;
+      if (!preset) return;
+      if (preset === 'gmail') {
+        document.getElementById(`${prefix}-box-host`).value = 'smtp.gmail.com';
+        document.getElementById(`${prefix}-box-port`).value = '587';
+        document.getElementById(`${prefix}-box-ssl`).value = 'starttls';
+      } else if (preset === 'outlook') {
+        document.getElementById(`${prefix}-box-host`).value = 'smtp.office365.com';
+        document.getElementById(`${prefix}-box-port`).value = '587';
+        document.getElementById(`${prefix}-box-ssl`).value = 'starttls';
+      } else if (preset === 'tencent') {
+        document.getElementById(`${prefix}-box-host`).value = 'smtp.exmail.qq.com';
+        document.getElementById(`${prefix}-box-port`).value = '465';
+        document.getElementById(`${prefix}-box-ssl`).value = 'ssl';
+      } else if (preset === '163') {
+        document.getElementById(`${prefix}-box-host`).value = 'smtphm.qiye.163.com';
+        document.getElementById(`${prefix}-box-port`).value = '465';
+        document.getElementById(`${prefix}-box-ssl`).value = 'ssl';
+      } else if (preset === 'aliyun') {
+        document.getElementById(`${prefix}-box-host`).value = 'smtp.qiye.aliyun.com';
+        document.getElementById(`${prefix}-box-port`).value = '465';
+        document.getElementById(`${prefix}-box-ssl`).value = 'ssl';
+      }
+    }
+
+    function autoFillUsername(prefix) {
+      const email = document.getElementById(`${prefix}-box-email`).value;
+      const userField = document.getElementById(`${prefix}-box-user`);
+      if (!userField.value || userField.value.includes('@')) {
+        userField.value = email;
+      }
+    }
+
+    function openEditMailbox(id) {
+      const mbox = mailboxesCache.find(b => b.id === id);
+      if (!mbox) return;
+      document.getElementById('edit-box-id').value = mbox.id;
+      document.getElementById('edit-box-email').value = mbox.email;
+      document.getElementById('edit-box-name').value = mbox.sender_name;
+      document.getElementById('edit-box-host').value = mbox.smtp_host;
+      document.getElementById('edit-box-port').value = mbox.smtp_port;
+      document.getElementById('edit-box-ssl').value = mbox.ssl_mode;
+      document.getElementById('edit-box-limit').value = mbox.daily_limit;
+      document.getElementById('edit-box-user').value = mbox.username || mbox.email;
+      document.getElementById('edit-box-pass').value = '';
+      document.getElementById('edit-box-active').checked = !!mbox.is_active;
+
+      document.getElementById('modal-edit-mailbox').classList.remove('hidden');
+    }
+
+    function hideEditMailboxModal() {
+      document.getElementById('modal-edit-mailbox').classList.add('hidden');
+    }
+
+    async function submitEditMailbox() {
+      const id = parseInt(document.getElementById('edit-box-id').value);
+      const rawPass = document.getElementById('edit-box-pass').value;
+      const payload = {
+        id,
+        sender_name: document.getElementById('edit-box-name').value,
+        smtp_host: document.getElementById('edit-box-host').value,
+        smtp_port: document.getElementById('edit-box-port').value,
+        ssl_mode: document.getElementById('edit-box-ssl').value,
+        username: document.getElementById('edit-box-user').value,
+        password: rawPass ? rawPass.replace(/\s+/g, '') : '',
+        daily_limit: document.getElementById('edit-box-limit').value,
+        is_active: document.getElementById('edit-box-active').checked
+      };
+
+      const res = await fetch('/api/mailboxes/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('发件箱配置已更新！');
+        hideEditMailboxModal();
+        loadMailboxes();
+        loadDashboard();
+      } else {
+        alert('更新失败: ' + json.error);
+      }
+    }
+
+    async function testEditMailboxModal() {
+      const btn = document.getElementById('btn-modal-edit-test');
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 测试中...';
+      btn.disabled = true;
+
+      const rawPass = document.getElementById('edit-box-pass').value;
+      let payload;
+      if (rawPass) {
+        payload = {
+          smtp_host: document.getElementById('edit-box-host').value,
+          smtp_port: document.getElementById('edit-box-port').value,
+          ssl_mode: document.getElementById('edit-box-ssl').value,
+          username: document.getElementById('edit-box-user').value,
+          password: rawPass.replace(/\s+/g, '')
+        };
+        const res = await fetch('/api/mailboxes/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+        alert(json.success ? '✅ 测试成功：SMTP 认证通过！' : '❌ 连接失败: ' + json.message);
+      } else {
+        const id = parseInt(document.getElementById('edit-box-id').value);
+        const res = await fetch('/api/mailboxes/test-by-id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const json = await res.json();
+        btn.innerHTML = origHtml;
+        btn.disabled = false;
+        alert(json.success ? '✅ 现有保存的凭证测试通过！' : '❌ 连接失败: ' + json.message);
+      }
+    }
+
+    async function deleteMailbox(id) {
+      if (confirm('确定删除该发件箱？')) {
+        await fetch(`/api/mailboxes/${id}`, { method: 'DELETE' });
+        loadMailboxes();
+        loadDashboard();
+      }
+    }
+
+    function showAddMailboxModal() { document.getElementById('modal-add-mailbox').classList.remove('hidden'); }
+    function hideAddMailboxModal() { document.getElementById('modal-add-mailbox').classList.add('hidden'); }
+
+    async function testCurrentMailboxModal() {
+      const btn = document.getElementById('btn-modal-test');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 测试中...';
+      btn.disabled = true;
+      const rawPass = document.getElementById('new-box-pass').value;
+      const payload = {
+        smtp_host: document.getElementById('new-box-host').value,
+        smtp_port: document.getElementById('new-box-port').value,
+        ssl_mode: document.getElementById('new-box-ssl').value,
+        username: document.getElementById('new-box-user').value,
+        password: rawPass ? rawPass.replace(/\s+/g, '') : ''
+      };
+      const res = await fetch('/api/mailboxes/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      btn.innerHTML = '<i class="fa-solid fa-plug mr-1"></i> 测试连通性';
+      btn.disabled = false;
+      alert(json.success ? '✅ SMTP 认证成功，连接正常！' : '❌ 连接失败: ' + json.message);
+    }
+
+    async function submitAddMailbox() {
+      const rawPass = document.getElementById('new-box-pass').value;
+      const payload = {
+        email: document.getElementById('new-box-email').value,
+        sender_name: document.getElementById('new-box-name').value,
+        smtp_host: document.getElementById('new-box-host').value,
+        smtp_port: document.getElementById('new-box-port').value,
+        ssl_mode: document.getElementById('new-box-ssl').value,
+        daily_limit: document.getElementById('new-box-limit').value,
+        username: document.getElementById('new-box-user').value,
+        password: rawPass ? rawPass.replace(/\s+/g, '') : ''
+      };
+      const res = await fetch('/api/mailboxes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (json.success) {
+        hideAddMailboxModal();
+        loadMailboxes();
+        loadDashboard();
+      } else {
+        alert('添加失败: ' + json.error);
+      }
+    }
+
+    // 4. 跟进序列
+    async function loadSequences() {
+      const res = await fetch('/api/sequences');
+      const json = await res.json();
+      if (json.success) {
+        sequencesData = json.data;
+        const container = document.getElementById('sequence-list-container');
+        container.innerHTML = sequencesData.map(s => `
+          <div onclick="selectSequenceForEdit(${s.id})" id="seq-card-${s.id}" class="cursor-pointer bg-white p-4 rounded-xl border border-slate-200 hover:border-brand-500 shadow-sm transition space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="badge bg-brand-50 text-brand-700">Step ${s.step_number}</span>
+              <span class="text-[11px] text-slate-400">间隔: ${s.delay_days} 天</span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-xs">${s.step_name}</h4>
+            <p class="text-[11px] text-slate-500 truncate font-mono">${s.subject}</p>
+          </div>
+        `).join('');
+
+        if (sequencesData.length > 0) {
+          selectSequenceForEdit(sequencesData[0].id);
+        }
+      }
+    }
+
+    function selectSequenceForEdit(id) {
+      const seq = sequencesData.find(s => s.id === id);
+      if (!seq) return;
+      document.getElementById('edit-seq-id').value = seq.id;
+      document.getElementById('edit-seq-title').innerText = `编辑模版: Step ${seq.step_number} (${seq.step_name})`;
+      document.getElementById('edit-seq-delay').value = seq.delay_days;
+      document.getElementById('edit-seq-subject').value = seq.subject;
+      document.getElementById('edit-seq-body').value = seq.body_template;
+
+      // 高亮选中的卡片
+      sequencesData.forEach(s => {
+        const card = document.getElementById(`seq-card-${s.id}`);
+        if (card) {
+          if (s.id === id) {
+            card.classList.add('border-brand-500', 'bg-brand-50/20');
+          } else {
+            card.classList.remove('border-brand-500', 'bg-brand-50/20');
+          }
+        }
+      });
+
+      fetchPreview(seq.step_number);
+    }
+
+    async function saveSequenceTemplate() {
+      const id = document.getElementById('edit-seq-id').value;
+      const delay_days = document.getElementById('edit-seq-delay').value;
+      const subject = document.getElementById('edit-seq-subject').value;
+      const body_template = document.getElementById('edit-seq-body').value;
+
+      const res = await fetch('/api/sequences/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, delay_days, subject, body_template })
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('模版已保存！');
+        loadSequences();
+      } else {
+        alert('保存失败: ' + json.error);
+      }
+    }
+
+    async function fetchPreview(stepNum) {
+      if (!stepNum) {
+        const id = parseInt(document.getElementById('edit-seq-id').value);
+        const seq = sequencesData.find(s => s.id === id);
+        stepNum = seq ? seq.step_number : 1;
+      }
+      const res = await fetch(`/api/preview?step=${stepNum}`);
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('preview-recipient').innerText = `${json.lead.first_name} <${json.lead.email}> (${json.lead.company})`;
+        document.getElementById('preview-subject').innerText = json.subject;
+        document.getElementById('preview-body').innerText = json.body;
+      }
+    }
+
+    // 5. 发信调度器
+    async function checkEligibleLeads() {
+      const step = document.getElementById('campaign-step-select').value;
+      const res = await fetch(`/api/campaign/eligible?step=${step}`);
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('eligible-count').innerText = json.count;
+        document.getElementById('eligible-desc').innerText = `当前阶段符合间隔规则并可发信的客户数`;
+      }
+    }
+
+    async function startCampaign() {
+      const step_number = parseInt(document.getElementById('campaign-step-select').value);
+      const mode = document.querySelector('input[name="campaign-mode"]:checked').value;
+      const dry_run = mode === 'dry_run';
+
+      if (!dry_run && !confirm(`⚠️ 您选择了【正式安全发送 LIVE】模式！\n即将向符合资格的客户真实发送外贸邮件，是否确认执行？`)) {
+        return;
+      }
+
+      const res = await fetch('/api/campaign/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step_number, dry_run })
+      });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('btn-start-campaign').classList.add('hidden');
+        document.getElementById('btn-stop-campaign').classList.remove('hidden');
+        document.getElementById('campaign-progress-panel').classList.remove('hidden');
+        startCampaignPolling();
+      } else {
+        alert('启动失败: ' + json.error);
+      }
+    }
+
+    async function stopCampaign() {
+      await fetch('/api/campaign/stop', { method: 'POST' });
+    }
+
+    function startCampaignPolling() {
+      if (campaignPollTimer) clearInterval(campaignPollTimer);
+      campaignPollTimer = setInterval(checkCampaignStatus, 1000);
+    }
+
+    async function checkCampaignStatus() {
+      const res = await fetch('/api/campaign/status');
+      const json = await res.json();
+      if (json.success) {
+        const job = json.data;
+        if (job.status === 'running') {
+          document.getElementById('campaign-progress-panel').classList.remove('hidden');
+          document.getElementById('btn-start-campaign').classList.add('hidden');
+          document.getElementById('btn-stop-campaign').classList.remove('hidden');
+
+          document.getElementById('campaign-curr-lead').innerText = job.current_lead || '准备中...';
+          document.getElementById('campaign-succ').innerText = job.success;
+          document.getElementById('campaign-fail').innerText = job.failed;
+          document.getElementById('campaign-skip').innerText = job.skipped;
+
+          const pct = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0;
+          document.getElementById('campaign-progressbar').style.width = pct + '%';
+
+          const term = document.getElementById('campaign-log-terminal');
+          term.innerHTML = job.logs.map(l => `<div>${l}</div>`).join('');
+          term.scrollTop = term.scrollHeight;
+
+        } else if (job.status === 'finished' || job.status === 'stopped') {
+          document.getElementById('btn-start-campaign').classList.remove('hidden');
+          document.getElementById('btn-stop-campaign').classList.add('hidden');
+          
+          if (job.total > 0) {
+            document.getElementById('campaign-progressbar').style.width = '100%';
+            const term = document.getElementById('campaign-log-terminal');
+            term.innerHTML = job.logs.map(l => `<div>${l}</div>`).join('');
+            term.scrollTop = term.scrollHeight;
+          }
+          if (campaignPollTimer) {
+            clearInterval(campaignPollTimer);
+            campaignPollTimer = null;
+          }
+          loadDashboard();
+          loadLeads();
+        }
+      }
+    }
+
+    // 6. 黑名单管理
+    async function loadSuppression() {
+      const res = await fetch('/api/suppression');
+      const json = await res.json();
+      const tbody = document.getElementById('suppression-tbody');
+      if (json.success && json.data.length > 0) {
+        tbody.innerHTML = json.data.map(item => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-4 font-mono font-medium text-slate-800">${item.email}</td>
+            <td class="py-3 px-4 text-slate-500">${item.reason}</td>
+            <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">${item.added_at}</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="deleteSuppression(${item.id})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i> 移除</button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-slate-400">暂无黑名单记录</td></tr>';
+      }
+    }
+
+    async function addSuppressionEmail() {
+      const email = document.getElementById('suppress-input-email').value;
+      if (!email) return alert('请输入邮箱');
+      const res = await fetch('/api/suppression', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, reason: 'Manual addition' })
+      });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('suppress-input-email').value = '';
+        loadSuppression();
+        loadDashboard();
+      } else {
+        alert(json.error);
+      }
+    }
+
+    async function deleteSuppression(id) {
+      if (confirm('确定从黑名单中移除此邮箱？')) {
+        await fetch(`/api/suppression/${id}`, { method: 'DELETE' });
+        loadSuppression();
+        loadDashboard();
+      }
+    }
+
+    // 7. 邮箱预热与健康养号 (Warm-up)
+    async function checkWarmupStatus() {
+      loadActiveMailboxesForWarmup();
+      try {
+        const res = await fetch('/api/warmup/status');
+        const json = await res.json();
+        if (json.success) {
+          updateWarmupUI(json.data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadActiveMailboxesForWarmup() {
+      const container = document.getElementById('warmup-active-boxes');
+      try {
+        const res = await fetch('/api/mailboxes');
+        const json = await res.json();
+        if (json.success) {
+          const active = json.data.filter(b => b.is_active);
+          if (active.length > 0) {
+            container.innerHTML = active.map(b => `
+              <div class="flex items-center justify-between text-slate-700 py-0.5">
+                <span class="flex items-center gap-1.5 font-medium truncate max-w-[200px]" title="${b.email}">
+                  <i class="fa-solid fa-circle-check text-emerald-500"></i> ${b.email}
+                </span>
+                <span class="text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">今日已发 ${b.sent_today || 0}</span>
+              </div>
+            `).join('');
+          } else {
+            container.innerHTML = `<span class="text-rose-500 font-sans">暂无启用的发件箱，请先在发件箱池配置！</span>`;
+          }
+        }
+      } catch (e) {
+        container.innerText = '加载发件箱失败';
+      }
+    }
+
+    async function startWarmupTask() {
+      const targetsRaw = document.getElementById('warmup-targets').value;
+      const targetEmails = targetsRaw.split('\n').map(e => e.trim()).filter(e => e && e.includes('@'));
+      if (targetEmails.length === 0) {
+        return alert('请至少填写一个有效的接收预热邮箱！');
+      }
+
+      const countPerBox = parseInt(document.getElementById('warmup-count-per-box').value, 10);
+      const delayPreset = document.getElementById('warmup-delay-preset').value;
+      let minDelay = 25, maxDelay = 40;
+      if (delayPreset === 'careful') {
+        minDelay = 40;
+        maxDelay = 70;
+      }
+
+      const res = await fetch('/api/warmup/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_emails: targetEmails,
+          count_per_mailbox: countPerBox,
+          min_delay: minDelay,
+          max_delay: maxDelay
+        })
+      });
+      const json = await res.json();
+      if (json.success) {
+        if (warmupPollTimer) clearInterval(warmupPollTimer);
+        warmupPollTimer = setInterval(pollWarmupStatus, 2000);
+        pollWarmupStatus();
+      } else {
+        alert(json.error);
+      }
+    }
+
+    async function stopWarmupTask() {
+      if (confirm('确定停止当前的预热养号任务？')) {
+        await fetch('/api/warmup/stop', { method: 'POST' });
+      }
+    }
+
+    async function pollWarmupStatus() {
+      try {
+        const res = await fetch('/api/warmup/status');
+        const json = await res.json();
+        if (json.success) {
+          updateWarmupUI(json.data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function updateWarmupUI(job) {
+      if (!job) return;
+      document.getElementById('warmup-total').innerText = job.total;
+      document.getElementById('warmup-processed').innerText = job.processed;
+      document.getElementById('warmup-success').innerText = job.success;
+      document.getElementById('warmup-fail').innerText = job.failed;
+      document.getElementById('warmup-current-action').innerText = job.current_action || '无运行中的任务';
+
+      const pct = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0;
+      document.getElementById('warmup-progressbar').style.width = pct + '%';
+
+      const term = document.getElementById('warmup-log-terminal');
+      if (job.logs && job.logs.length > 0) {
+        term.innerHTML = job.logs.map(l => {
+          let colorClass = 'text-slate-300';
+          if (l.includes('[SUCCESS]')) colorClass = 'text-emerald-400 font-semibold';
+          else if (l.includes('[ERROR]')) colorClass = 'text-rose-400 font-semibold';
+          else if (l.includes('[WARN]')) colorClass = 'text-amber-400';
+          return `<div class="${colorClass}">${l}</div>`;
+        }).join('');
+        term.scrollTop = term.scrollHeight;
+      }
+
+      const dot = document.getElementById('warmup-status-dot');
+      const txt = document.getElementById('warmup-status-text');
+      const btnStart = document.getElementById('btn-start-warmup');
+      const btnStop = document.getElementById('btn-stop-warmup');
+
+      if (job.status === 'running') {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
+        txt.innerText = '正在自动化预热中...';
+        btnStart.classList.add('hidden');
+        btnStop.classList.remove('hidden');
+        if (!warmupPollTimer) {
+          warmupPollTimer = setInterval(pollWarmupStatus, 2000);
+        }
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+        txt.innerText = job.status === 'finished' ? '预热完成 (Finished)' : 
+                        job.status === 'stopped' ? '已手动停止 (Stopped)' : '待命就绪 (Idle)';
+        btnStart.classList.remove('hidden');
+        btnStop.classList.add('hidden');
+        if (warmupPollTimer && (job.status === 'finished' || job.status === 'stopped')) {
+          clearInterval(warmupPollTimer);
+          warmupPollTimer = null;
+        }
+        loadDashboard();
+      }
+    }
+
+    function clearWarmupLogs() {
+      document.getElementById('warmup-log-terminal').innerHTML = '<div class="text-slate-500">// 屏幕已清空</div>';
+    }
+
+    // 默认加载
+    window.onload = () => {
+      loadDashboard();
+      loadLogs();
+    };
+  </script>
+</body>
+</html>

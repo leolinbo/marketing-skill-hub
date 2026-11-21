@@ -1,0 +1,13 @@
+Subject: Technical Brief: Motorized Track Spotlight with Casambi Control (MOVIA Series)
+Dear [Client Name],
+When managing lighting layouts for galleries, museums, or high-end retail, manual re-aiming and fixture adjustment at ceiling height often incur significant maintenance labor and operational friction.
+To address this, we developed the MOVIA Motorized Track Spotlight—a remote-commissioning fixture integrated with  CASAMBI  wireless control.
+Key Engineering Highlights:
+Motorized Motion: Full Pan (360°), Tilt (140°), and optical Zooming (18°–60°) controlled remotely from floor level.
+Dynamic Spectrum Control: Integrated Tunable White (2700K–6000K) and 0–100% dimming for adaptive ambient lighting.
+Optical Options: Available in a 30W Zoomable version (18°–60°) and a 25W Narrow Spot version (9°) for long-throw accent lighting.
+Precision Positioning: High-precision motors with positioning accuracy under 1.5°, ensuring reliable scene memory recall.
+Mounting Flexibility: Standard track-mounted and ceiling monopoint configurations.
+Would it be helpful to receive the MOVIA technical spec pack (IES files & user guide) for your technical library?
+Just let me know, and I’ll send the files over.
+Best regards,

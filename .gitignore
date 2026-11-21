@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+*.log
+
+# Sensitive Trade Mail Data (Credentials & Local DB)
+tools/auto_trade_mail/data/*.db
+tools/auto_trade_mail/data/*.sqlite
+tools/auto_trade_mail/data/*.db-journal
+tools/auto_trade_mail/*.mjs
+
+# Large local media, generated proposal outputs & project dumps
+docling-project/
+assets/
+pdf/
+proposals/
+开发信Word库_完整版/
+canva_raw.html
+LiGHT26_Leads_Workbench.html
+
+# Internal agent cache & IDE
+.workbuddy-ai/
+.idea/
+.vscode/
+
+# Build artifacts & temp
+node_modules/
+dist/
+.wrangler/
+*.exe

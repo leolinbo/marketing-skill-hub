@@ -1,0 +1,37 @@
+Hi XXX,
+Good day!
+When lighting high-ceiling architectural spaces—such as airports, shopping malls, hotel lobbies, or luxury showrooms—designers and engineers often face three major challenges:
+Insufficient lumen output,
+Harsh glare,
+High maintenance costs.
+...
+To perfectly address these pain points, we have engineered the GALAXY Downlight System. It is not just a single fixture, but a comprehensive, architectural-grade lighting solution designed to elevate premium spaces.
+Here is how GALAXY delivers unparalleled value to your upcoming high-end projects:
+ 
+1. Superior Thermal Management & High Output
+A robust, one-piece integrated heatsink with a chimney-style convection design ensures efficient heat dissipation even at high wattages (up to 45W). It delivers an outstanding luminous efficacy of >100 lm/W, outputting up to 4,500 delivered lms without compromising lifespan.
+ 
+2. Visual Comfort Without Compromise (UGR < 16)
+High ceilings shouldn't mean harsh glare: With a precise 30° shielding cut-off angle and advanced optical shielding, GALAXY achieves UGR < 16 and provides bright, high-quality illumination while maintaining supreme visual comfort for occupants below.
+ 
+3. Tool-Free Magnetic Reflector (Drastic Labor Savings): 
+The secondary reflectors can be swapped in seconds without any tools. We offer versatile finishes to seamlessly fit diverse interior aesthetics.
+ 
+4. Ultimate Versatility: One Family, Three Installations
+GALAXY family supports Recessed-mounted (4", 5", 6"), Surface-mounted and Pendant/Cylinder installations to maintain a unified visual language throughout a project.
+ 
+5. Bonus for Surface/Pendant: A completely seamless, screw-free exterior that guarantees an exceptionally clean, high-end appearance.
+ 
+6. Key Specifications Quick Look:
+LED Source: Premium Bridgelux COB
+Color Quality: CRI 90+, SDCM ≤ 3 (Static White, Tunable White 2700K-5000K, and RGBCW available)
+IP Rating: IP54 (Suitable for transitional semi-outdoor and wet areas)
+Smart Control: Compatible with On-Off, Phase/Triac, 0/1-10V, DALI and CASAMBI
+Certifications: Globally compliant (including ETL/UL for North America)
+ 
+I have attached our latest product brochure and technical datasheets for your review. If you have any ongoing or upcoming high-ceiling projects that require IES files, photometric reports, or sample testing, please let me know.
+ 
+Looking forward to exploring how we can bring value to your business.
+ 
+Best regards,
+ 

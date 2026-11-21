@@ -1,0 +1,27 @@
+DELLA-2 Adjustable Introduction
+Subject: Deep Dive into DELLA Adjustable: (根据客户背调定制后半部分标题）
+Hi XX,
+In the implementation of high-end hotel and villa lighting projects, the following "hidden pain points" often consume the most engineering effort:
+Alignment Difficulties: Relying on the naked eye to adjust tilt angles results in poor consistency across a row of fixtures, requiring extensive manual commissioning.
+Visual Imperfections: Gaps appearing after adjustment lead to light leakage into the ceiling void, while easily accumulating dust and attracting insects.
+Displacement Issues: When installed near HVAC equipment or other machinery, mechanical vibrations often cause the beam angle to shift over time.
+Maintenance Damage: 75mm cutout fixtures are often difficult to remove, frequently damaging the expensive plasterboard ceiling finish.
+DELLA Addresses These Issues.
+1. Precise Tiltable Adjustment: 5° Tactile Feedback SystemIn premium projects, the skill level of installation workers can vary significantly. DELLA introduces a precision adjustment design:
+Fixed-point Operation: A clear physical "click" position at every 5° interval during tilting.
+Sensory Feedback: Workers simply insert their thumb into the inner ring and, without looking up, can ensure perfectly uniform angles across an entire row based solely on sound and touch. This eliminates the sunk cost of spending a whole day just to align tilt angles.
+2. Shift-Axis Design with Zero Light LossHigh-end clients have near-stringent requirements for detail. Traditional adjustable downlights create gaps after tilting, which leads to two critical issues:
+Light Loss & Visual Pollution: Looking up reveals the ceiling interior, including wires and debris, through the gaps.
+Maintenance Nightmares: Gaps allow dust to fall through, and the high temperature of the heat sink attracts insects.
+DELLA achieves fully enclosed design with zero light leakage. Regardless of the angle adjustment, the exterior appearance remains seamless and integrated. Eliminating maintenance risks after project handover.
+3.  Super Modular Design & Optimized Construction LogicFor one-stop delivery, DELLA addresses the risks of unprofessional installation and maintenance across three dimensions:
+Spring Clip Design: For 75mm cutouts, DELLA abandons the common "Butterfly Clips" that are prone to injuring hands and damaging plasterboard edges. We have engineered the adjustable version to be compatible with Spring Clips, minimizing damage to the ceiling finishes during installation and removal.
+Super Modular Design (Tool-free Assembly): Every component of the DELLA is detachable and features full directional labeling. For example, a "small peak" on the secondary reflector aligns with a unique "triangular indentation" inside. Combined with audible feedback at every step, even non-professionals can achieve error-free, precise snapping, significantly lowering the construction threshold.
+Pull Ring Design: We have designed a high-strength Pull Ring that allows maintenance personnel to pull the entire LED module directly out from below the ceiling for servicing. The ring structure is extremely robust and will never deform, ensuring that future maintenance requires no extensive contact with or damage to the ceiling structure.
+Physical Locking Mechanism: To combat vibrations from AC units or other equipment, DELLA features a dedicated screw-locking position. Once tightened, the angle is rigidly fixed, ensuring the beam never shifts in any environment.
+4. The Foundation of Optical QualityBuying a lamp is ultimately about buying light. DELLA’s pure and uniform light output:
+Purity: SDCM < 3 and CRI > 90 ensure perfect color restoration of solid wood flooring, carpets, and window textiles.
+Comfort: 50° cut off guarantees visual comfort, which is the core of creating the right "atmosphere."
+DELLA’s innovative structural design provides the necessary support to ensure that high-quality light is delivered consistently. 
+I look forward to discussing how we can integrate these solutions into your upcoming projects.
+Best regards,
