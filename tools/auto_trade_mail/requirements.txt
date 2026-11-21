@@ -1,0 +1,2 @@
+# Auto Trade Mail relies entirely on Python standard library
+# Pure, robust and lightweight

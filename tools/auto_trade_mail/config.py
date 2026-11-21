@@ -14,9 +14,9 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # 数据库路径
 DB_PATH = DATA_DIR / "trade_mail.db"
 
-# Web 服务配置
-WEB_HOST = "127.0.0.1"
-WEB_PORT = 8765
+# Web 服务配置（云端环境自动读取 PORT 和 HOST）
+WEB_HOST = os.environ.get("HOST", "0.0.0.0")
+WEB_PORT = int(os.environ.get("PORT", 8765))
 
 # 外贸营销发信安全红线 (来自 marketing/skills/cold-outreach)
 DEFAULT_SAFETY_CONFIG = {
