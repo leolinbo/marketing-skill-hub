@@ -348,9 +348,9 @@
       </div>
     </div>
 
-    <!-- 邮箱预热与养号模块 (Warm-up Engine) -->
+    <!-- 邮箱预热与养号模块 2.0 (High-Freedom Warm-up Engine) -->
     <div id="view-warmup" class="hidden space-y-6">
-      <!-- 预热指导横幅 -->
+      <!-- 预热指导与智能去重横幅 -->
       <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
         <div class="flex items-start gap-4">
           <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl flex-shrink-0">
@@ -358,15 +358,37 @@
           </div>
           <div class="space-y-1">
             <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
-              自动化邮箱预热与健康养号 (Email Warm-up)
-              <span class="badge bg-amber-100 text-amber-800 text-[11px]">防进垃圾箱核心利器</span>
+              自动化邮箱预热与健康养号 2.0
+              <span class="badge bg-emerald-100 text-emerald-800 text-[11px] font-semibold"><i class="fa-solid fa-bolt mr-1"></i>已支持智能断点续跑 & 自由勾选</span>
             </h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-              <b>为什么需要预热？</b> 新创建或近期发信量较少的邮箱，若突然向陌生海外买家大量发信，Google 和企业邮件系统（如 Outlook/Proofpoint）容易判定为可疑垃圾群发，直接拦截或进垃圾箱。<br>
-              <b>养号工作原理：</b> 系统自动使用您启用的发件箱，向您自己的真实日常邮箱轮流发送自然商务日常邮件，并严格保持模拟真人的随机时间抖动（25~45 秒）。<br>
-              <span class="text-amber-800 font-semibold">💡 核心养号技巧：收到预热邮件后，请随手在您的日常邮箱点击阅读、标星、或者简单回复一句（例如“Got it, thanks!”），各大邮件服务商将火速将您的发件箱标记为「高信誉白名单真人伙伴」，从此稳进主收件箱！</span>
+              <b>智能断点续跑：</b> 系统会自动读取数据库，精准识别每个发件箱<b>今日已经成功预热的封数</b>。已达标的邮箱<b>全自动跳过</b>，绝不重复发送浪费配额；未达标的邮箱<b>仅补发差额</b>！<br>
+              <span class="text-amber-800 font-semibold">💡 养号核心提示：您可在下方完全自主勾选要发哪些邮箱、发给谁、发几封，收到后随手标星或简单回信一句，Google 会迅速赋予极高信誉！</span>
             </p>
           </div>
+        </div>
+      </div>
+
+      <!-- 今日各发件箱养号进度与勾选看板 -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b pb-3">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-envelope-circle-check text-brand-600"></i>
+              今日发件箱进度看板 (可自主勾选参与预热的邮箱)
+            </h3>
+            <p class="text-[11px] text-slate-500">勾选要参与本次预热的发件箱，系统会实时计算需要补发的差额。</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="toggleSelectAllWarmupBoxes(true)" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium">全选</button>
+            <button onclick="toggleSelectAllWarmupBoxes(false)" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium">全不选</button>
+            <button onclick="loadWarmupMailboxes()" class="px-2.5 py-1 text-xs text-brand-600 hover:bg-brand-50 rounded font-medium"><i class="fa-solid fa-rotate-right mr-1"></i>刷新状态</button>
+          </div>
+        </div>
+
+        <div id="warmup-boxes-cards" class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+          <!-- 动态加载各发件箱进度卡片 -->
+          <div class="text-xs text-slate-400 py-3">正在拉取发件箱今日预热状态...</div>
         </div>
       </div>
 
@@ -374,48 +396,91 @@
         <!-- 左侧：参数与目标邮箱配置 -->
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <h3 class="font-bold text-slate-900 text-sm border-b pb-2 flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-brand-600"></i> 预热参数配置
+            <i class="fa-solid fa-sliders text-brand-600"></i> 自主预热规则设置
           </h3>
 
+          <!-- 模式选择 -->
+          <div class="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <label class="block font-semibold text-slate-800 text-xs">发信模式选择</label>
+            <div class="space-y-2 pt-1 text-xs">
+              <label class="flex items-start gap-2 cursor-pointer">
+                <input type="radio" name="warmup-mode" value="smart" checked class="mt-0.5 text-brand-600">
+                <div>
+                  <div class="font-semibold text-slate-800">🎯 智能断点补发 (强烈推荐)</div>
+                  <div class="text-[11px] text-slate-500">已达标的发件箱自动跳过，只向未达标的邮箱精准补发差额，不重复轰炸。</div>
+                </div>
+              </label>
+              <label class="flex items-start gap-2 cursor-pointer">
+                <input type="radio" name="warmup-mode" value="force" class="mt-0.5 text-brand-600">
+                <div>
+                  <div class="font-semibold text-slate-800">⚡ 强制立即加发</div>
+                  <div class="text-[11px] text-slate-500">无视今日已发数量，对所选发件箱强制额外加发设定的封数。</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 发信量与间隔 -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 text-xs mb-1">今日单箱目标封数</label>
+              <div class="flex items-center">
+                <input type="number" id="warmup-target-count" min="1" max="30" value="2" onchange="renderMailboxCardsUI()" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg font-mono">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-0.5">第1天建议2封，逐步递增</p>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 text-xs mb-1">防风控随机间隔 (秒)</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="warmup-min-delay" min="10" max="120" value="25" class="w-16 px-2 py-1.5 text-xs border border-slate-300 rounded-lg font-mono text-center">
+                <span class="text-slate-400 text-xs">~</span>
+                <input type="number" id="warmup-max-delay" min="15" max="180" value="45" class="w-16 px-2 py-1.5 text-xs border border-slate-300 rounded-lg font-mono text-center">
+              </div>
+              <p class="text-[10px] text-slate-400 mt-0.5">模拟真人敲键盘发信</p>
+            </div>
+          </div>
+
+          <!-- 接收邮箱配置 -->
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="block font-semibold text-slate-700 text-xs">接收预热的真实日常邮箱 *</label>
+              <label class="block font-semibold text-slate-700 text-xs">接收预热的日常真实邮箱 *</label>
               <span class="text-[10px] text-slate-400">一行一个</span>
             </div>
-            <textarea id="warmup-targets" rows="5" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="输入接收预热的邮箱，每行一个">sales21@encore-tech.com
+
+            <!-- 快捷标签选框 -->
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <span class="text-[10px] text-slate-500 self-center">快捷添加:</span>
+              <button type="button" onclick="quickAddTarget('sales21@encore-tech.com')" class="px-2 py-0.5 text-[10px] bg-sky-50 text-sky-700 border border-sky-200 rounded hover:bg-sky-100">+ 企业邮</button>
+              <button type="button" onclick="quickAddTarget('jklvbn598j90@gmail.com')" class="px-2 py-0.5 text-[10px] bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100">+ Gmail</button>
+              <button type="button" onclick="quickAddTarget('3348573505@qq.com')" class="px-2 py-0.5 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded hover:bg-emerald-100">+ QQ邮1</button>
+              <button type="button" onclick="quickAddTarget('2912281722@qq.com')" class="px-2 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-100">+ QQ邮2</button>
+            </div>
+
+            <textarea id="warmup-targets" rows="4" class="w-full p-2.5 text-xs border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="输入接收预热的邮箱，每行一个">sales21@encore-tech.com
 jklvbn598j90@gmail.com
 3348573505@qq.com
 2912281722@qq.com</textarea>
             <p class="text-[11px] text-slate-500 mt-1">
-              已为您默认预置您指定的 4 个常用邮箱（覆盖企业邮、Gmail、QQ邮箱不同网关）。
+              已为您默认预置 4 个常用邮箱（覆盖企业邮、Gmail、QQ邮箱不同网关）。
             </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block font-semibold text-slate-700 text-xs mb-1">每箱发送封数</label>
-              <select id="warmup-count-per-box" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white">
-                <option value="1">1 封 (轻量试温)</option>
-                <option value="2" selected>2 封 (推荐平衡)</option>
-                <option value="3">3 封 (充分预热)</option>
-                <option value="4">4 封 (深度养号)</option>
-              </select>
+          <!-- 折叠：预热商务语料库查看 -->
+          <details class="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <summary class="font-semibold text-slate-700 cursor-pointer flex items-center justify-between">
+              <span><i class="fa-solid fa-book-open text-amber-500 mr-1"></i> 查看预热商务语料 (6套高质感模板)</span>
+              <i class="fa-solid fa-chevron-down text-slate-400 text-[10px]"></i>
+            </summary>
+            <div class="mt-2 space-y-2 text-slate-600 border-t pt-2 text-[11px]">
+              <div>• <b>主题 1:</b> Quick check on the project schedule (项目里程碑核对)</div>
+              <div>• <b>主题 2:</b> Updated meeting notes from yesterday (会议纪要同步)</div>
+              <div>• <b>主题 3:</b> Question regarding the technical specifications (技术规格参数确认)</div>
+              <div>• <b>主题 4:</b> Sharing the quarterly review document (季度报告分享)</div>
+              <div>• <b>主题 5:</b> Quick note regarding the upcoming exhibition (展位布置协调)</div>
+              <div>• <b>主题 6:</b> Sample test results overview (样品测试结论汇总)</div>
+              <div class="text-[10px] text-slate-400 pt-1">* 纯文本自然商务沟通，不带任何推销大图与垃圾关键词，进箱率最高。</div>
             </div>
-            <div>
-              <label class="block font-semibold text-slate-700 text-xs mb-1">模拟真人间隔</label>
-              <select id="warmup-delay-preset" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white">
-                <option value="quick">25 ~ 40 秒 (默认推荐)</option>
-                <option value="careful">40 ~ 70 秒 (高谨慎度)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 text-xs mb-1">当前参与预热的发件箱池</label>
-            <div id="warmup-active-boxes" class="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600 font-mono space-y-1">
-              正在加载发件箱...
-            </div>
-          </div>
+          </details>
 
           <div class="pt-2">
             <button onclick="startWarmupTask()" id="btn-start-warmup" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-sm rounded-lg shadow transition flex items-center justify-center gap-2">
@@ -436,10 +501,11 @@ jklvbn598j90@gmail.com
                 <span class="font-bold text-sm text-slate-200" id="warmup-status-text">待命就绪 (Idle)</span>
               </div>
               <div class="text-xs text-slate-400 font-mono">
-                总计: <span id="warmup-total" class="text-white font-bold">0</span> | 
-                已发送: <span id="warmup-processed" class="text-sky-400 font-bold">0</span> | 
+                本轮需发: <span id="warmup-total" class="text-white font-bold">0</span> | 
+                已发: <span id="warmup-processed" class="text-sky-400 font-bold">0</span> | 
                 成功: <span id="warmup-success" class="text-emerald-400 font-bold">0</span> | 
-                失败: <span id="warmup-fail" class="text-rose-400 font-bold">0</span>
+                失败: <span id="warmup-fail" class="text-rose-400 font-bold">0</span> | 
+                跳过已达标: <span id="warmup-skipped" class="text-amber-400 font-bold">0</span>
               </div>
             </div>
 
@@ -457,12 +523,12 @@ jklvbn598j90@gmail.com
 
             <!-- 实时日志终端 -->
             <div class="bg-black/60 p-3 rounded-lg border border-slate-800 font-mono text-[11px] h-64 overflow-y-auto space-y-1.5" id="warmup-log-terminal">
-              <div class="text-slate-500">// 准备就绪。点击左侧“开始自动化预热养号”即可启动。</div>
+              <div class="text-slate-500">// 准备就绪。系统已开启智能断点续跑，已达标邮箱将自动跳过，仅补发未达标邮箱。</div>
             </div>
           </div>
 
           <div class="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/80">
-            <span>🛡️ 全自动模拟人类商务间隔与语料，安全零封号风险</span>
+            <span>🛡️ 自动断点续跑 + 连续3次智能抗丢包重试</span>
             <button onclick="clearWarmupLogs()" class="hover:text-slate-200 underline">清空屏幕</button>
           </div>
         </div>
@@ -1366,9 +1432,11 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
       }
     }
 
-    // 7. 邮箱预热与健康养号 (Warm-up)
+    // 7. 邮箱预热与健康养号 2.0 (Smart Warm-up with Checkpoints & Full Customization)
+    let warmupMailboxesData = [];
+
     async function checkWarmupStatus() {
-      loadActiveMailboxesForWarmup();
+      await loadWarmupMailboxes();
       try {
         const res = await fetch('/api/warmup/status');
         const json = await res.json();
@@ -1376,72 +1444,135 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
           updateWarmupUI(json.data);
         }
       } catch (e) {
-        console.error(e);
+        console.error('Failed to fetch warmup status:', e);
       }
     }
 
-    async function loadActiveMailboxesForWarmup() {
-      const container = document.getElementById('warmup-active-boxes');
+    async function loadWarmupMailboxes() {
+      const container = document.getElementById('warmup-boxes-cards');
       try {
-        const res = await fetch('/api/mailboxes');
+        const res = await fetch('/api/warmup/mailboxes');
         const json = await res.json();
         if (json.success) {
-          const active = json.data.filter(b => b.is_active);
-          if (active.length > 0) {
-            container.innerHTML = active.map(b => `
-              <div class="flex items-center justify-between text-slate-700 py-0.5">
-                <span class="flex items-center gap-1.5 font-medium truncate max-w-[200px]" title="${b.email}">
-                  <i class="fa-solid fa-circle-check text-emerald-500"></i> ${b.email}
-                </span>
-                <span class="text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">今日已发 ${b.sent_today || 0}</span>
-              </div>
-            `).join('');
-          } else {
-            container.innerHTML = `<span class="text-rose-500 font-sans">暂无启用的发件箱，请先在发件箱池配置！</span>`;
-          }
+          warmupMailboxesData = json.data;
+          renderMailboxCardsUI();
+        } else {
+          container.innerHTML = `<div class="col-span-2 text-rose-500 py-3">加载发件箱失败: ${json.error}</div>`;
         }
       } catch (e) {
-        container.innerText = '加载发件箱失败';
+        container.innerHTML = `<div class="col-span-2 text-rose-500 py-3">网络异常，无法拉取发件箱</div>`;
+      }
+    }
+
+    function renderMailboxCardsUI() {
+      const container = document.getElementById('warmup-boxes-cards');
+      if (!warmupMailboxesData || warmupMailboxesData.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-slate-400 py-3">暂无可用发件箱，请先在【发件箱池】中添加邮箱！</div>`;
+        return;
+      }
+
+      const targetCount = parseInt(document.getElementById('warmup-target-count').value || 2, 10);
+
+      container.innerHTML = warmupMailboxesData.map(b => {
+        const warmupToday = b.warmup_today || 0;
+        const isReached = warmupToday >= targetCount;
+        const needed = Math.max(0, targetCount - warmupToday);
+
+        const badgeHtml = isReached
+          ? `<span class="badge bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+               <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i>今日已达标 (${warmupToday}/${targetCount} 封) · 自动跳过
+             </span>`
+          : `<span class="badge bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200">
+               <i class="fa-solid fa-hourglass-half mr-1 text-amber-600"></i>待补发 ${needed} 封 (今日已发 ${warmupToday}/${targetCount} 封)
+             </span>`;
+
+        const borderClass = isReached ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200 hover:border-brand-300';
+
+        return `
+          <div class="p-3 rounded-lg border ${borderClass} flex items-center justify-between gap-3 transition">
+            <div class="flex items-center gap-3 min-w-0">
+              <input type="checkbox" class="warmup-box-cb w-4 h-4 text-brand-600 rounded border-slate-300 cursor-pointer" data-id="${b.id}" ${b.is_active ? 'checked' : ''}>
+              <div class="min-w-0">
+                <div class="font-bold text-slate-800 text-xs truncate flex items-center gap-1.5" title="${b.email}">
+                  <i class="fa-solid fa-envelope text-slate-400 text-xs"></i> ${b.email}
+                </div>
+                <div class="text-[11px] text-slate-500 truncate mt-0.5">
+                  发件人: <span class="font-medium text-slate-700">${b.sender_name || '默认'}</span> | 今日总发信: <span class="font-mono">${b.sent_today}/${b.daily_limit}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex-shrink-0">
+              ${badgeHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSelectAllWarmupBoxes(checked) {
+      document.querySelectorAll('.warmup-box-cb').forEach(cb => {
+        cb.checked = checked;
+      });
+    }
+
+    function quickAddTarget(email) {
+      const ta = document.getElementById('warmup-targets');
+      const lines = ta.value.split('\n').map(l => l.trim()).filter(l => l);
+      if (!lines.includes(email)) {
+        lines.push(email);
+        ta.value = lines.join('\n');
       }
     }
 
     async function startWarmupTask() {
+      // 1. 获取选中的发件箱
+      const checkedBoxes = Array.from(document.querySelectorAll('.warmup-box-cb:checked')).map(cb => parseInt(cb.dataset.id, 10));
+      if (checkedBoxes.length === 0) {
+        return alert('⚠️ 请至少勾选一个要进行预热的发件箱！');
+      }
+
+      // 2. 获取接收邮箱
       const targetsRaw = document.getElementById('warmup-targets').value;
       const targetEmails = targetsRaw.split('\n').map(e => e.trim()).filter(e => e && e.includes('@'));
       if (targetEmails.length === 0) {
-        return alert('请至少填写一个有效的接收预热邮箱！');
+        return alert('⚠️ 请至少填写一个有效的接收预热邮箱！');
       }
 
-      const countPerBox = parseInt(document.getElementById('warmup-count-per-box').value, 10);
-      const delayPreset = document.getElementById('warmup-delay-preset').value;
-      let minDelay = 25, maxDelay = 40;
-      if (delayPreset === 'careful') {
-        minDelay = 40;
-        maxDelay = 70;
+      // 3. 获取模式与参数
+      const mode = document.querySelector('input[name="warmup-mode"]:checked').value;
+      const targetCount = parseInt(document.getElementById('warmup-target-count').value || 2, 10);
+      const minDelay = parseInt(document.getElementById('warmup-min-delay').value || 25, 10);
+      const maxDelay = parseInt(document.getElementById('warmup-max-delay').value || 45, 10);
+
+      if (minDelay > maxDelay) {
+        return alert('⚠️ 随机间隔的最小秒数不能大于最大秒数！');
       }
 
       const res = await fetch('/api/warmup/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          selected_mailbox_ids: checkedBoxes,
+          mode: mode,
+          target_count: targetCount,
           target_emails: targetEmails,
-          count_per_mailbox: countPerBox,
           min_delay: minDelay,
           max_delay: maxDelay
         })
       });
+
       const json = await res.json();
       if (json.success) {
         if (warmupPollTimer) clearInterval(warmupPollTimer);
-        warmupPollTimer = setInterval(pollWarmupStatus, 2000);
+        warmupPollTimer = setInterval(pollWarmupStatus, 1500);
         pollWarmupStatus();
       } else {
-        alert(json.error);
+        alert('启动预热失败: ' + json.error);
       }
     }
 
     async function stopWarmupTask() {
-      if (confirm('确定停止当前的预热养号任务？')) {
+      if (confirm('确定立即停止当前的预热养号任务？')) {
         await fetch('/api/warmup/stop', { method: 'POST' });
       }
     }
@@ -1460,13 +1591,16 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
 
     function updateWarmupUI(job) {
       if (!job) return;
-      document.getElementById('warmup-total').innerText = job.total;
-      document.getElementById('warmup-processed').innerText = job.processed;
-      document.getElementById('warmup-success').innerText = job.success;
-      document.getElementById('warmup-fail').innerText = job.failed;
+      document.getElementById('warmup-total').innerText = job.total || 0;
+      document.getElementById('warmup-processed').innerText = job.processed || 0;
+      document.getElementById('warmup-success').innerText = job.success || 0;
+      document.getElementById('warmup-fail').innerText = job.failed || 0;
+      const skippedEl = document.getElementById('warmup-skipped');
+      if (skippedEl) skippedEl.innerText = job.skipped || 0;
+
       document.getElementById('warmup-current-action').innerText = job.current_action || '无运行中的任务';
 
-      const pct = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0;
+      const pct = job.total > 0 ? Math.round((job.processed / job.total) * 100) : (job.status === 'finished' ? 100 : 0);
       document.getElementById('warmup-progressbar').style.width = pct + '%';
 
       const term = document.getElementById('warmup-log-terminal');
@@ -1476,6 +1610,7 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
           if (l.includes('[SUCCESS]')) colorClass = 'text-emerald-400 font-semibold';
           else if (l.includes('[ERROR]')) colorClass = 'text-rose-400 font-semibold';
           else if (l.includes('[WARN]')) colorClass = 'text-amber-400';
+          else if (l.includes('[智能跳过]')) colorClass = 'text-amber-300 font-bold';
           return `<div class="${colorClass}">${l}</div>`;
         }).join('');
         term.scrollTop = term.scrollHeight;
@@ -1492,7 +1627,7 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
         btnStart.classList.add('hidden');
         btnStop.classList.remove('hidden');
         if (!warmupPollTimer) {
-          warmupPollTimer = setInterval(pollWarmupStatus, 2000);
+          warmupPollTimer = setInterval(pollWarmupStatus, 1500);
         }
       } else {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
@@ -1505,6 +1640,7 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
           warmupPollTimer = null;
         }
         loadDashboard();
+        loadWarmupMailboxes();
       }
     }
 

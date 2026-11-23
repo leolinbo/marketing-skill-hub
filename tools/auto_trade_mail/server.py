@@ -16,7 +16,7 @@ from mailer import (
     CampaignRunner, execute_campaign, test_smtp_connection, 
     render_template, get_eligible_leads_for_step
 )
-from warmup import WarmupRunner, execute_warmup_task
+from warmup import WarmupRunner, execute_warmup_task, get_mailboxes_warmup_status
 from importer import import_leads_from_rows, parse_csv_content
 from oauth_outlook import build_authorization_url, exchange_code_for_token
 
@@ -131,6 +131,11 @@ class TradeMailHandler(BaseHTTPRequestHandler):
         elif path == "/api/warmup/status":
             runner = WarmupRunner.get_instance()
             self.send_json({"success": True, "data": runner.current_job})
+            return
+
+        elif path == "/api/warmup/mailboxes":
+            boxes = get_mailboxes_warmup_status()
+            self.send_json({"success": True, "data": boxes})
             return
 
         elif path == "/api/campaign/eligible":
@@ -507,13 +512,16 @@ class TradeMailHandler(BaseHTTPRequestHandler):
                 self.send_error_json("请提供至少一个接收预热的邮箱")
                 return
             
-            count_per_mailbox = int(body.get("count_per_mailbox", 2))
+            selected_mailbox_ids = body.get("selected_mailbox_ids", None)
+            mode = body.get("mode", "smart") # "smart" or "force"
+            target_count = int(body.get("target_count", 2))
             min_delay = int(body.get("min_delay", 25))
-            max_delay = int(body.get("max_delay", 50))
+            max_delay = int(body.get("max_delay", 45))
+            custom_topics = body.get("custom_topics", None)
 
             t = threading.Thread(
                 target=execute_warmup_task,
-                args=(target_emails, count_per_mailbox, min_delay, max_delay),
+                args=(target_emails, selected_mailbox_ids, mode, target_count, min_delay, max_delay, custom_topics),
                 daemon=True
             )
             t.start()

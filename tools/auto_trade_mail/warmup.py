@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Email Warm-up Engine (自动化邮箱预热与健康养号引擎)
-模拟自然商务沟通往来，提升发信域名与新邮箱权重
+Email Warm-up Engine 2.0 (高自由度与智能断点补发邮箱预热引擎)
+支持：
+- 自主勾选指定发件箱 / 指定收件箱
+- 智能断点补发模式（已达标自动跳过，绝不重复发送）与强制追加模式
+- 模拟自然商务沟通语料
+- 动态抗丢包连续重试
 """
 import time
 import random
@@ -9,7 +13,7 @@ import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate, make_msgid
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 from db import get_connection
 from mailer import get_token_for_mailbox
@@ -56,6 +60,7 @@ class WarmupRunner:
             "processed": 0,
             "success": 0,
             "failed": 0,
+            "skipped": 0,
             "status": "idle", # idle, running, stopped, finished
             "current_action": "",
             "logs": []
@@ -78,8 +83,25 @@ class WarmupRunner:
         self.stop_requested = True
         self.log("收到停止预热指令，当前单封发完后将自动终止...", "WARN")
 
+def get_mailboxes_warmup_status() -> List[Dict[str, Any]]:
+    """获取所有发件箱及其今日预热成功封数与配额状态"""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+    SELECT 
+        m.id, m.email, m.sender_name, m.daily_limit, m.sent_today, m.is_active,
+        COUNT(CASE WHEN s.status = 'warmup' AND date(s.sent_at) = date('now', 'localtime') THEN 1 END) as warmup_today
+    FROM mailboxes m
+    LEFT JOIN send_logs s ON m.id = s.mailbox_id
+    GROUP BY m.id
+    ORDER BY m.id ASC
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
 def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, body_text: str, max_retries: int = 3) -> Tuple[bool, str]:
-    """发送一封预热邮件 (带抗丢包智能重试)"""
+    """发送一封预热邮件 (带抗丢包智能连续重试)"""
     host = mailbox["smtp_host"]
     port = int(mailbox["smtp_port"])
     ssl_mode = mailbox.get("ssl_mode", "starttls").lower()
@@ -131,16 +153,24 @@ def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, bod
         except Exception as e:
             last_error = str(e)
             if attempt < max_retries:
-                time.sleep(2)  # 遇到国内网络瞬时丢包，间隔 2 秒重试
+                time.sleep(2)  # 遇到丢包，间隔 2 秒重试
 
     return False, last_error
 
-def execute_warmup_task(target_emails: List[str], count_per_mailbox: int = 2, min_delay: int = 25, max_delay: int = 50):
+def execute_warmup_task(
+    target_emails: List[str],
+    selected_mailbox_ids: Optional[List[int]] = None,
+    mode: str = "smart", # "smart" = 智能补发差额达标; "force" = 强制全量加发
+    target_count: int = 2,
+    min_delay: int = 25,
+    max_delay: int = 45,
+    custom_topics: Optional[List[Dict[str, str]]] = None
+):
     """
-    执行自动化养号预热流程：
-    - 遍历所有活跃发件箱
-    - 每个发件箱随机抽取预热接收邮箱，发送自然日常商务邮件
-    - 带有随机时间抖动，完全模拟真人正常来往
+    高人性化预热引擎：
+    - 允许自主勾选指定发件箱
+    - 智能识别今日已达标情况：若发件箱已完成今日目标，自动跳过，绝不重复发信扣额度！
+    - 仅针对未达标发件箱精确补发差额！
     """
     runner = WarmupRunner.get_instance()
     runner.is_running = True
@@ -148,48 +178,87 @@ def execute_warmup_task(target_emails: List[str], count_per_mailbox: int = 2, mi
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM mailboxes WHERE is_active = 1")
+
+    # 1. 过滤出发件箱池
+    if selected_mailbox_ids and len(selected_mailbox_ids) > 0:
+        placeholders = ",".join("?" * len(selected_mailbox_ids))
+        cur.execute(f"SELECT * FROM mailboxes WHERE id IN ({placeholders}) AND is_active = 1", selected_mailbox_ids)
+    else:
+        cur.execute("SELECT * FROM mailboxes WHERE is_active = 1")
+    
     mailboxes = [dict(r) for r in cur.fetchall()]
 
     if not mailboxes:
-        runner.log("未找到活跃的发件箱，请先在发件箱池中配置并启用邮箱！", "ERROR")
+        runner.log("未选择或未找到已启用的发件箱，请先在面板勾选发件箱！", "ERROR")
         runner.is_running = False
         conn.close()
         return
 
     if not target_emails:
-        runner.log("预热目标邮箱列表为空，请填写您的预热接收邮箱！", "ERROR")
+        runner.log("预热接收目标邮箱列表为空，请填写您的预热接收邮箱！", "ERROR")
         runner.is_running = False
         conn.close()
         return
 
-    # 计算总任务量
-    total_tasks = len(mailboxes) * count_per_mailbox
+    topics_pool = custom_topics if (custom_topics and len(custom_topics) > 0) else WARMUP_TOPICS
+
+    # 2. 查询各发件箱今日已成功预热的数量，计算实际需要发送的批次
+    mailbox_plan = [] # [(mbox, count_to_send)]
+    total_to_send = 0
+
+    for mbox in mailboxes:
+        cur.execute("""
+        SELECT COUNT(*) FROM send_logs 
+        WHERE mailbox_id = ? AND status = 'warmup' AND date(sent_at) = date('now', 'localtime')
+        """, (mbox["id"],))
+        already_sent = cur.fetchone()[0]
+
+        if mode == "smart":
+            # 智能断点补发：目标 - 已发
+            needed = max(0, target_count - already_sent)
+            if needed == 0:
+                runner.log(f"⚡ [智能跳过] 发件箱 {mbox['email']} 今日已成功预热 {already_sent}/{target_count} 封（已达标），无需重复扣费发送！")
+            else:
+                runner.log(f"🎯 [智能计划] 发件箱 {mbox['email']} 今日已发 {already_sent} 封，目标 {target_count} 封，本次将精准补发 {needed} 封。")
+                mailbox_plan.append((mbox, needed))
+                total_to_send += needed
+        else:
+            # 强制加发模式
+            mailbox_plan.append((mbox, target_count))
+            total_to_send += target_count
+
     runner.current_job = {
-        "total": total_tasks,
+        "total": total_to_send,
         "processed": 0,
         "success": 0,
         "failed": 0,
+        "skipped": len(mailboxes) - len(mailbox_plan),
         "status": "running",
-        "current_action": "准备开始预热任务...",
-        "logs": []
+        "current_action": "准备开始发送...",
+        "logs": runner.current_job["logs"] # 保留跳过日志
     }
 
-    runner.log(f"🔥 启动自动化预热养号！发件箱: {len(mailboxes)} 个 | 每个预热 {count_per_mailbox} 封 | 总计: {total_tasks} 封")
+    if total_to_send == 0:
+        runner.log("🎉 所选发件箱今日预热目标已全部圆满完成，无需任何补发！", "SUCCESS")
+        runner.current_job["status"] = "finished"
+        runner.is_running = False
+        conn.close()
+        return
 
-    for mbox in mailboxes:
+    runner.log(f"🚀 开始执行本次精准预热！待发送总数: {total_to_send} 封 | 参与发件箱: {len(mailbox_plan)} 个")
+
+    for mbox, count in mailbox_plan:
         if runner.stop_requested:
             break
 
-        runner.log(f"--- 正在使用发件箱: {mbox['email']} 发起预热 ---")
-        for i in range(count_per_mailbox):
+        runner.log(f"--- 正在使用发件箱: {mbox['email']} 发送 {count} 封 ---")
+        for i in range(count):
             if runner.stop_requested:
                 break
 
             dest_email = random.choice(target_emails).strip()
-            topic = random.choice(WARMUP_TOPICS)
+            topic = random.choice(topics_pool)
             subject = topic["subject"]
-            # 附带发件人签名
             body = f"{topic['body']}\n\n{mbox['sender_name']}\nEncore Lighting Team"
 
             runner.current_job["current_action"] = f"{mbox['email']} ➔ {dest_email}"
@@ -212,7 +281,7 @@ def execute_warmup_task(target_emails: List[str], count_per_mailbox: int = 2, mi
                 conn.commit()
 
                 # 随机防风控间隔
-                if (runner.current_job["processed"] < total_tasks) and not runner.stop_requested:
+                if (runner.current_job["processed"] < total_to_send) and not runner.stop_requested:
                     jitter = random.uniform(min_delay, max_delay)
                     runner.log(f"模拟真人发信节奏：等待 {jitter:.1f} 秒后发送下一封...")
                     time.sleep(jitter)
@@ -227,5 +296,5 @@ def execute_warmup_task(target_emails: List[str], count_per_mailbox: int = 2, mi
 
     conn.close()
     runner.current_job["status"] = "stopped" if runner.stop_requested else "finished"
-    runner.log(f"🎉 预热任务全部结束！成功送达: {runner.current_job['success']} 封, 失败: {runner.current_job['failed']} 封")
+    runner.log(f"🎉 本轮预热执行结束！成功送达: {runner.current_job['success']} 封, 失败: {runner.current_job['failed']} 封")
     runner.is_running = False
