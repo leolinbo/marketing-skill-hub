@@ -38,7 +38,7 @@
       </div>
       
       <!-- 导航标签 -->
-      <nav class="flex space-x-1 sm:space-x-2">
+      <nav class="flex space-x-1 sm:space-x-2 items-center">
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-brand-600 bg-brand-50 flex items-center gap-2">
           <i class="fa-solid fa-chart-pie"></i> 概览大盘
         </button>
@@ -51,12 +51,36 @@
         <button onclick="switchTab('sequences')" id="nav-sequences" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-route"></i> 跟进序列
         </button>
-        <button onclick="switchTab('campaign')" id="nav-campaign" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-bolt text-amber-500"></i> 发信调度
+        <button onclick="switchTab('encore-showcase')" id="nav-encore-showcase" class="px-3 py-2 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 flex items-center gap-2 border border-amber-200">
+          <i class="fa-solid fa-gem text-amber-500"></i> Encore AIDA 专区
         </button>
-        <button onclick="switchTab('warmup')" id="nav-warmup" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-fire text-amber-500"></i> 邮箱预热
-        </button>
+        
+        <!-- 发信任务统一合并子菜单 (满足发信整合需求) -->
+        <div class="relative group">
+          <button id="nav-sending" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-paper-plane text-brand-600"></i>
+            <span>发信中心</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:rotate-180 transition"></i>
+          </button>
+          <div class="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 hidden group-hover:block z-50">
+            <button onclick="switchTab('campaign')" class="w-full text-left flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-brand-50 hover:text-brand-600 transition">
+              <i class="fa-solid fa-bolt text-amber-500 w-4"></i>
+              <div>
+                <div class="font-bold">营销开发信调度</div>
+                <div class="text-[10px] text-slate-400">客户序列匹配与轮循外发</div>
+              </div>
+            </button>
+            <div class="border-t border-slate-100 my-1"></div>
+            <button onclick="switchTab('warmup')" class="w-full text-left flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition">
+              <i class="fa-solid fa-fire text-orange-500 w-4"></i>
+              <div>
+                <div class="font-bold">预热与健康养号 2.0</div>
+                <div class="text-[10px] text-slate-400">智能断点补发 & 自由勾选</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <button onclick="switchTab('suppression')" id="nav-suppression" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-ban text-rose-500"></i> 黑名单/退订
         </button>
@@ -115,28 +139,45 @@
         </div>
       </div>
 
-      <!-- 发信日志预览 -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> 最近发信记录
-          </h3>
-          <button onclick="loadLogs()" class="text-xs text-brand-600 hover:underline">刷新</button>
+      <!-- 发信日志与发送详情看板 -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-brand-600"></i> 最近发信记录与投递明细
+            </h3>
+            <p class="text-[11px] text-slate-500">实时追踪邮件何时发出、是否送达成功，并可随时点击查看发送的完整邮件正文与报错。</p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <!-- 状态快速筛选 -->
+            <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs" id="log-status-filters">
+              <button onclick="changeLogFilter('all')" class="px-2.5 py-1 rounded-md bg-white text-slate-800 font-semibold shadow-2xs log-filter-btn" data-filter="all">全部</button>
+              <button onclick="changeLogFilter('success')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-emerald-700 log-filter-btn" data-filter="success">✅ 成功送达</button>
+              <button onclick="changeLogFilter('failed')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-rose-700 log-filter-btn" data-filter="failed">❌ 失败</button>
+              <button onclick="changeLogFilter('warmup')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-amber-700 log-filter-btn" data-filter="warmup">🔥 养号预热</button>
+            </div>
+            <button onclick="loadLogs()" class="p-1.5 text-xs text-brand-600 hover:bg-brand-50 rounded-lg transition" title="刷新日志">
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
         </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600">
             <thead class="bg-slate-50 text-slate-700 font-semibold border-b">
               <tr>
-                <th class="py-2.5 px-3">时间</th>
+                <th class="py-2.5 px-3">发信具体时间</th>
                 <th class="py-2.5 px-3">收件客户</th>
                 <th class="py-2.5 px-3">发件邮箱</th>
-                <th class="py-2.5 px-3">阶段</th>
-                <th class="py-2.5 px-3">主题</th>
-                <th class="py-2.5 px-3">状态</th>
+                <th class="py-2.5 px-3">业务类型/阶段</th>
+                <th class="py-2.5 px-3">邮件主题</th>
+                <th class="py-2.5 px-3">投递状态</th>
+                <th class="py-2.5 px-3 text-right">邮件全文</th>
               </tr>
             </thead>
             <tbody id="dashboard-logs-tbody">
-              <tr><td colspan="6" class="text-center py-4 text-slate-400">暂无日志</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-slate-400">正在拉取发信日志...</td></tr>
             </tbody>
           </table>
         </div>
@@ -268,6 +309,16 @@
 
     <!-- 5. 发信调度执行器 (Campaign Runner) -->
     <div id="view-campaign" class="hidden space-y-6">
+      <!-- 统一发信子导航栏 (平级副菜单) -->
+      <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+        <button onclick="switchTab('campaign')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-brand-600 text-white shadow-xs">
+          <i class="fa-solid fa-bolt"></i> 客户营销开发信调度 (Campaign)
+        </button>
+        <button onclick="switchTab('warmup')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200">
+          <i class="fa-solid fa-fire text-orange-500"></i> 新号预热与健康养号 2.0 (Warm-up)
+        </button>
+      </div>
+
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
         <div>
           <h2 class="text-lg font-bold text-slate-900">外贸自动化发信调度中心</h2>
@@ -350,6 +401,16 @@
 
     <!-- 邮箱预热与养号模块 2.0 (High-Freedom Warm-up Engine) -->
     <div id="view-warmup" class="hidden space-y-6">
+      <!-- 统一发信子导航栏 (平级副菜单) -->
+      <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
+        <button onclick="switchTab('campaign')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200">
+          <i class="fa-solid fa-bolt text-brand-600"></i> 客户营销开发信调度 (Campaign)
+        </button>
+        <button onclick="switchTab('warmup')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs">
+          <i class="fa-solid fa-fire"></i> 新号预热与健康养号 2.0 (Warm-up)
+        </button>
+      </div>
+
       <!-- 预热指导与智能去重横幅 -->
       <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
         <div class="flex items-start gap-4">
@@ -565,6 +626,176 @@ jklvbn598j90@gmail.com
       </div>
     </div>
 
+    <!-- 8. Encore AIDA 专区 (Showcase & Cadence) -->
+    <div id="view-encore-showcase" class="hidden space-y-6">
+      
+      <!-- 顶部通知横幅 -->
+      <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-l-4 border-amber-500 bg-white p-5 rounded-r-xl shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="badge bg-amber-100 text-amber-800"><i class="fa-solid fa-award mr-1"></i>Encore 官方邮件标准</span>
+            <h2 class="text-base font-bold text-slate-900">4 阶段自适应发信序列与真实买家库 (AIDA + 痛点调研结合)</h2>
+          </div>
+          <p class="text-xs text-slate-600 mt-1">
+            严格遵循公司《开发信写作要求.docx》AIDA 法则与《开发信体系.pdf》：Step 1 纯文本轻量破冰，Step 2 明星单品亮剑，Step 3 案例背书，Step 4 优雅收尾。
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="importEncoreLeadsToMain()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5">
+            <i class="fa-solid fa-cloud-arrow-down"></i> 一键同步至客户线索库
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 阶段自动化序列卡片 -->
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-amber-500"></i> 4 阶段跟进策略 (Outreach Sequence Pipeline)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="encore-sequence-cards">
+          <!-- 动态渲染 4 个阶段卡片 -->
+        </div>
+      </div>
+
+      <!-- 核心工作区：左侧买家名单，右侧实时双模预览 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左侧：精选买家列表 (5 cols) -->
+        <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <div class="flex items-center justify-between border-b pb-3">
+            <div>
+              <h3 class="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-address-book text-slate-500"></i> 精选真实买家 (中东 & LiGHT26)
+              </h3>
+              <p class="text-[11px] text-slate-400">点击客户即可右侧实时预览其专属 4 阶段文案</p>
+            </div>
+            <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full" id="encore-leads-count">0 家</span>
+          </div>
+
+          <!-- 分类筛选器 -->
+          <div class="flex gap-1.5 text-[11px]">
+            <button onclick="filterEncoreLeads('all')" class="px-2.5 py-1 rounded-md bg-slate-100 font-medium text-slate-700 hover:bg-slate-200 encore-cat-btn" data-cat="all">全部</button>
+            <button onclick="filterEncoreLeads('中东-阿联酋')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="中东-阿联酋">阿联酋</button>
+            <button onclick="filterEncoreLeads('中东-沙特')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="中东-沙特">沙特</button>
+            <button onclick="filterEncoreLeads('英国-LiGHT26')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="英国-LiGHT26">LiGHT26</button>
+          </div>
+
+          <div class="space-y-2 max-h-[560px] overflow-y-auto pr-1" id="encore-leads-list">
+            <!-- 动态买家条目 -->
+          </div>
+        </div>
+
+        <!-- 右侧：邮件预览与动作面板 (7 cols) -->
+        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
+          
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-800" id="preview-company-title">PXLS Lighting Systems</span>
+                <span class="badge bg-slate-100 text-slate-600 font-mono" id="preview-email-tag">Moissar@pxls.ae</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5" id="preview-meta-desc">背景: TOTO 卫浴展厅 | 推荐产品: DELLA</div>
+            </div>
+
+            <!-- 阶段切换切换器 -->
+            <div class="flex bg-slate-100 p-0.5 rounded-lg text-xs font-medium" id="preview-step-pills">
+              <button onclick="setEncorePreviewStep(1)" class="px-2.5 py-1 rounded-md bg-white text-slate-800 shadow-xs" id="step-pill-1">Step 1 (破冰)</button>
+              <button onclick="setEncorePreviewStep(2)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800" id="step-pill-2">Step 2 (AIDA)</button>
+              <button onclick="setEncorePreviewStep(3)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800" id="step-pill-3">Step 3 (案例)</button>
+              <button onclick="setEncorePreviewStep(4)" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800" id="step-pill-4">Step 4 (收尾)</button>
+            </div>
+          </div>
+
+          <!-- 拟真优雅邮件信纸阅览器 (替代难看黑底，自然融入页面) -->
+          <div class="border border-slate-200/90 rounded-xl bg-slate-50/70 p-4 space-y-3 shadow-2xs">
+            <!-- 邮件信头参数条 -->
+            <div class="space-y-1.5 text-xs border-b border-slate-200/80 pb-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 font-semibold w-14">发件人:</span>
+                  <span class="font-medium text-slate-800 flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-[10px] font-bold">B</span>
+                    Bob &lt;bob@encore-lighting.com&gt;
+                  </span>
+                </div>
+                <span class="text-[11px] text-slate-400 flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-500"></i>实时四段式生成</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 font-semibold w-14">收件客户:</span>
+                <span class="font-mono text-slate-800 font-medium" id="preview-to-display">Moissar &lt;Moissar@pxls.ae&gt;</span>
+              </div>
+              <div class="flex items-start gap-2 pt-1">
+                <span class="text-slate-400 font-semibold w-14 shrink-0 mt-0.5">邮件主题:</span>
+                <span class="font-bold text-slate-900 text-xs sm:text-sm" id="preview-subject-text">-</span>
+              </div>
+            </div>
+
+            <!-- 邮件正文卡片 (高雅纯白信纸，清晰易读) -->
+            <div class="bg-white rounded-lg border border-slate-200 shadow-2xs p-5 space-y-4 font-sans text-xs text-slate-800 leading-relaxed max-h-[460px] overflow-y-auto">
+              
+              <!-- 结构提示角标 -->
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span class="text-[11px] font-medium" id="preview-step-badge">
+                  <i class="fa-solid fa-circle-info mr-1"></i>遵循公司标准四段式结构
+                </span>
+                <span class="text-[10px] text-slate-400">营销规范排版</span>
+              </div>
+
+              <!-- 正文文字部分 -->
+              <div class="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-slate-800" id="preview-body-text">-</div>
+
+              <!-- 动态多媒体宣传配图 / 工程背书卡片 (仅在 AIDA / 案例阶段展示) -->
+              <div id="preview-media-card" class="space-y-3">
+                <!-- 产品图片容器 -->
+                <div id="preview-product-banner-wrap" class="hidden border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-slate-50">
+                  <img id="preview-product-banner-img" src="" alt="产品实物配图" class="w-full max-h-56 object-cover hover:scale-101 transition duration-300">
+                  <div class="px-3.5 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600">
+                    <span class="flex items-center gap-1.5 font-medium" id="preview-product-caption">
+                      <i class="fa-solid fa-camera text-brand-600"></i> DELLA 迷你防眩筒灯宣传插图 / 邮签 Banner
+                    </span>
+                    <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px]">
+                      <i class="fa-solid fa-image mr-1"></i>配图已就绪
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 案例工程背书容器 -->
+                <div id="preview-case-banner-wrap" class="hidden p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-xl flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                    <i class="fa-solid fa-award"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-900 text-xs">海外工程实景背书：NIKE 零售连锁店 (10+ 州 6,000+ 套定制交付)</div>
+                    <div class="text-[11px] text-slate-600 mt-0.5">严格遵循 UGR&lt;16 防眩与模块化快速交付标准，提供完整 IES 测光报告与工程实景图册。</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 底部动作条 -->
+          <div class="pt-3 border-t flex flex-wrap items-center justify-between gap-3">
+            <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              <span>支持客户端原生一键调起，多电脑/手机均可瞬间直开写信窗口</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="launchMailMasterCurrent()" class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-envelope"></i> 唤起网易邮箱写信
+              </button>
+              <button onclick="copyPreviewContent()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-copy"></i> 复制全文
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </main>
 
   <!-- 模态框：批量导入 CSV -->
@@ -770,31 +1001,129 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
     </div>
   </div>
 
+  <!-- 模态框：查看发信记录与邮件全文内容 -->
+  <div id="modal-view-log" class="fixed inset-0 bg-black/40 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b pb-3 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm">邮件投递记录与正文详情</h3>
+            <p class="text-[11px] text-slate-500" id="log-detail-time">-</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="log-detail-status-badge" class="badge">-</span>
+          <button onclick="hideLogDetailModal()" class="text-slate-400 hover:text-slate-600 ml-2"><i class="fa-solid fa-xmark text-base"></i></button>
+        </div>
+      </div>
+
+      <div class="space-y-3 overflow-y-auto pr-1 flex-1 text-xs">
+        <!-- 基础元数据 -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <div>
+            <span class="text-slate-400 font-semibold block mb-0.5">发件邮箱:</span>
+            <span class="font-mono text-slate-800 font-medium" id="log-detail-mailbox">-</span>
+          </div>
+          <div>
+            <span class="text-slate-400 font-semibold block mb-0.5">收件客户:</span>
+            <span class="font-mono text-slate-800 font-medium" id="log-detail-lead">-</span>
+          </div>
+          <div>
+            <span class="text-slate-400 font-semibold block mb-0.5">业务阶段 / 类型:</span>
+            <span class="font-medium text-slate-700" id="log-detail-step">-</span>
+          </div>
+          <div>
+            <span class="text-slate-400 font-semibold block mb-0.5">投递状态:</span>
+            <span class="font-semibold" id="log-detail-status">-</span>
+          </div>
+        </div>
+
+        <!-- 报错信息 (如果失败) -->
+        <div id="log-detail-error-box" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700">
+          <span class="font-bold flex items-center gap-1.5 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> 投递失败报错信息:</span>
+          <div class="font-mono text-[11px]" id="log-detail-error-msg">-</div>
+        </div>
+
+        <!-- 邮件主题 -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">发送的主题 (Subject)</label>
+          <div class="p-2.5 bg-slate-100/70 border border-slate-200 rounded-lg font-bold text-slate-900 text-xs" id="log-detail-subject">-</div>
+        </div>
+
+        <!-- 邮件全文 -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">发送的邮件正文内容 (Email Body)</label>
+            <button onclick="copyLogBody()" class="text-[11px] text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
+              <i class="fa-solid fa-copy"></i> 复制全文
+            </button>
+          </div>
+          <div class="p-3.5 bg-white border border-slate-200 rounded-lg font-sans text-xs text-slate-800 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto" id="log-detail-body">-</div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t flex justify-end gap-2 shrink-0">
+        <button onclick="copyLogBody()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-copy"></i> 复制正文
+        </button>
+        <button onclick="hideLogDetailModal()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let sequencesData = [];
     let mailboxesCache = [];
     let campaignPollTimer = null;
     let warmupPollTimer = null;
+    let currentLogsCache = [];
+    let currentLogFilter = 'all';
 
     // 切换 Tab
     function switchTab(tab) {
-      const views = ['dashboard', 'leads', 'mailboxes', 'sequences', 'campaign', 'warmup', 'suppression'];
+      const views = ['dashboard', 'leads', 'mailboxes', 'sequences', 'encore-showcase', 'campaign', 'warmup', 'suppression'];
       views.forEach(v => {
-        document.getElementById(`view-${v}`).classList.add('hidden');
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
         const nav = document.getElementById(`nav-${v}`);
-        nav.classList.remove('text-brand-600', 'bg-brand-50');
-        nav.classList.add('text-slate-600');
+        if (nav) {
+          nav.classList.remove('text-brand-600', 'bg-brand-50', 'text-amber-700', 'bg-amber-100');
+          nav.classList.add('text-slate-600');
+        }
       });
 
-      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      // 发信中心父按钮高亮处理
+      const sendingNav = document.getElementById('nav-sending');
+      if (sendingNav) {
+        if (tab === 'campaign' || tab === 'warmup') {
+          sendingNav.classList.remove('text-slate-600');
+          sendingNav.classList.add('text-brand-600', 'bg-brand-50');
+        } else {
+          sendingNav.classList.remove('text-brand-600', 'bg-brand-50');
+          sendingNav.classList.add('text-slate-600');
+        }
+      }
+
+      const targetView = document.getElementById(`view-${tab}`);
+      if (targetView) targetView.classList.remove('hidden');
       const activeNav = document.getElementById(`nav-${tab}`);
-      activeNav.classList.remove('text-slate-600');
-      activeNav.classList.add('text-brand-600', 'bg-brand-50');
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-600');
+        if (tab === 'encore-showcase') {
+          activeNav.classList.add('text-amber-700', 'bg-amber-100');
+        } else {
+          activeNav.classList.add('text-brand-600', 'bg-brand-50');
+        }
+      }
 
       if (tab === 'dashboard') { loadDashboard(); loadLogs(); }
       else if (tab === 'leads') { loadLeads(); }
       else if (tab === 'mailboxes') { loadMailboxes(); }
       else if (tab === 'sequences') { loadSequences(); }
+      else if (tab === 'encore-showcase') { loadEncoreShowcase(); }
       else if (tab === 'campaign') { checkEligibleLeads(); checkCampaignStatus(); }
       else if (tab === 'warmup') { checkWarmupStatus(); }
       else if (tab === 'suppression') { loadSuppression(); }
@@ -818,32 +1147,113 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
       }
     }
 
+    function changeLogFilter(filter) {
+      currentLogFilter = filter;
+      document.querySelectorAll('.log-filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = 'px-2.5 py-1 rounded-md bg-white text-slate-800 font-semibold shadow-2xs log-filter-btn';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 log-filter-btn';
+        }
+      });
+      loadLogs();
+    }
+
     async function loadLogs() {
       try {
-        const res = await fetch('/api/logs?limit=8');
+        const url = currentLogFilter === 'all' ? '/api/logs?limit=40' : `/api/logs?limit=40&status=${currentLogFilter}`;
+        const res = await fetch(url);
         const json = await res.json();
         const tbody = document.getElementById('dashboard-logs-tbody');
         if (json.success && json.data.length > 0) {
-          tbody.innerHTML = json.data.map(log => `
-            <tr class="hover:bg-slate-50 border-b border-slate-100">
-              <td class="py-2.5 px-3 font-mono text-slate-500">${log.sent_at.split(' ')[1] || log.sent_at}</td>
-              <td class="py-2.5 px-3 font-medium text-slate-800">${log.lead_email}</td>
-              <td class="py-2.5 px-3 text-slate-500">${log.mailbox_email || '-'}</td>
-              <td class="py-2.5 px-3"><span class="badge bg-sky-50 text-sky-700">Step ${log.step_number}</span></td>
-              <td class="py-2.5 px-3 max-w-xs truncate text-slate-600" title="${log.subject}">${log.subject}</td>
-              <td class="py-2.5 px-3">
-                ${log.status === 'success' ? '<span class="badge bg-emerald-100 text-emerald-800">已成功送达</span>' : 
-                  log.status === 'dry_run' ? '<span class="badge bg-indigo-100 text-indigo-800">演练验证通过</span>' : 
-                  `<span class="badge bg-rose-100 text-rose-800" title="${log.error_message}">发送失败</span>`}
-              </td>
-            </tr>
-          `).join('');
+          currentLogsCache = json.data;
+          tbody.innerHTML = json.data.map(log => {
+            const timeStr = log.sent_at || '-';
+            let statusBadge = '';
+            if (log.status === 'success') {
+              statusBadge = '<span class="badge bg-emerald-100 text-emerald-800 font-semibold"><i class="fa-solid fa-check mr-1"></i>已成功送达</span>';
+            } else if (log.status === 'warmup') {
+              statusBadge = '<span class="badge bg-amber-100 text-amber-800 font-semibold"><i class="fa-solid fa-fire mr-1"></i>预热成功</span>';
+            } else if (log.status === 'dry_run') {
+              statusBadge = '<span class="badge bg-indigo-100 text-indigo-800"><i class="fa-solid fa-vial mr-1"></i>演练验证</span>';
+            } else {
+              statusBadge = `<span class="badge bg-rose-100 text-rose-800 font-semibold cursor-help" title="${log.error_message || ''}"><i class="fa-solid fa-xmark mr-1"></i>发送失败</span>`;
+            }
+
+            const stepText = log.status === 'warmup' ? '新号养号预热' : (log.step_number === 0 ? '预热邮件' : `Step ${log.step_number}`);
+
+            return `
+              <tr class="hover:bg-slate-50 border-b border-slate-100 transition">
+                <td class="py-2.5 px-3 font-mono text-slate-800 font-medium whitespace-nowrap">${timeStr}</td>
+                <td class="py-2.5 px-3 font-medium text-slate-800">${log.lead_email}</td>
+                <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${log.mailbox_email || '-'}</td>
+                <td class="py-2.5 px-3"><span class="badge bg-sky-50 text-sky-700">${stepText}</span></td>
+                <td class="py-2.5 px-3 max-w-xs truncate text-slate-700 font-medium" title="${log.subject || ''}">${log.subject || '-'}</td>
+                <td class="py-2.5 px-3 whitespace-nowrap">${statusBadge}</td>
+                <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                  <button onclick="viewLogDetail(${log.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-brand-50 text-slate-700 hover:text-brand-600 rounded font-medium text-[11px] inline-flex items-center gap-1 transition">
+                    <i class="fa-solid fa-eye"></i> 查看内容
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-slate-400">暂无日志</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-400">暂无该分类下的发信记录</td></tr>';
         }
       } catch (e) {
         console.error(e);
       }
+    }
+
+    function viewLogDetail(logId) {
+      const log = currentLogsCache.find(l => l.id === logId);
+      if (!log) return;
+      document.getElementById('log-detail-time').innerText = `发送时间: ${log.sent_at || '-'}`;
+      document.getElementById('log-detail-mailbox').innerText = log.mailbox_email || '系统默认发件箱';
+      document.getElementById('log-detail-lead').innerText = log.lead_email || '-';
+      document.getElementById('log-detail-step').innerText = log.status === 'warmup' ? '新号养号预热 (Warm-up)' : (log.step_number === 0 ? '预热邮件' : `Step ${log.step_number} 营销跟进`);
+      document.getElementById('log-detail-status').innerText = log.status === 'success' ? '已成功送达' : (log.status === 'warmup' ? '预热成功' : (log.status === 'dry_run' ? '演练验证' : '发送失败'));
+      
+      const badge = document.getElementById('log-detail-status-badge');
+      if (log.status === 'success') {
+        badge.className = 'badge bg-emerald-100 text-emerald-800 font-bold';
+        badge.innerText = '成功送达';
+      } else if (log.status === 'warmup') {
+        badge.className = 'badge bg-amber-100 text-amber-800 font-bold';
+        badge.innerText = '预热成功';
+      } else if (log.status === 'dry_run') {
+        badge.className = 'badge bg-indigo-100 text-indigo-800 font-bold';
+        badge.innerText = '演练通过';
+      } else {
+        badge.className = 'badge bg-rose-100 text-rose-800 font-bold';
+        badge.innerText = '发送失败';
+      }
+
+      const errBox = document.getElementById('log-detail-error-box');
+      if (log.error_message) {
+        errBox.classList.remove('hidden');
+        document.getElementById('log-detail-error-msg').innerText = log.error_message;
+      } else {
+        errBox.classList.add('hidden');
+      }
+
+      document.getElementById('log-detail-subject').innerText = log.subject || '(无主题)';
+      document.getElementById('log-detail-body').innerText = log.body || '(此为早期历史记录未缓存正文，系统此后发送的所有邮件均已自动完整缓存)';
+
+      document.getElementById('modal-view-log').classList.remove('hidden');
+    }
+
+    function hideLogDetailModal() {
+      document.getElementById('modal-view-log').classList.add('hidden');
+    }
+
+    function copyLogBody() {
+      const subject = document.getElementById('log-detail-subject').innerText;
+      const body = document.getElementById('log-detail-body').innerText;
+      navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`).then(() => {
+        alert('✅ 邮件内容已复制到剪贴板！');
+      });
     }
 
     // 2. Leads 管理
@@ -1653,6 +2063,214 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
       loadDashboard();
       loadLogs();
     };
+
+    // ==========================================
+    // Encore AIDA 营销专区交互逻辑
+    // ==========================================
+    let encoreData = { sequences: [], leads: [] };
+    let currentEncoreLeadIndex = 0;
+    let currentEncoreStep = 1;
+    let currentEncoreFilter = 'all';
+
+    async function loadEncoreShowcase() {
+      try {
+        const res = await fetch('/api/encore/showcase');
+        const json = await res.json();
+        if (json.success) {
+          encoreData = json.data;
+          renderEncoreSequences(encoreData.sequences);
+          renderEncoreLeadsList();
+          renderEncorePreview();
+        }
+      } catch (e) {
+        console.error('Failed to load Encore showcase:', e);
+      }
+    }
+
+    function renderEncoreSequences(seqs) {
+      const container = document.getElementById('encore-sequence-cards');
+      if (!container) return;
+      container.innerHTML = seqs.map(s => `
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2 hover:border-amber-400 transition cursor-pointer" onclick="setEncorePreviewStep(${s.step_number})">
+          <div class="flex items-center justify-between">
+            <span class="badge ${s.step_number === 1 ? 'bg-sky-100 text-sky-800' : s.step_number === 2 ? 'bg-amber-100 text-amber-800' : s.step_number === 3 ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-700'}">Step ${s.step_number}</span>
+            <span class="text-[11px] text-slate-400 font-mono">${s.delay_days === 0 ? '首封即刻' : `间隔 ${s.delay_days} 天`}</span>
+          </div>
+          <div class="text-xs font-bold text-slate-800">${s.step_name}</div>
+          <p class="text-[11px] text-slate-500 line-clamp-2">${s.subject}</p>
+        </div>
+      `).join('');
+    }
+
+    function filterEncoreLeads(cat) {
+      currentEncoreFilter = cat;
+      document.querySelectorAll('.encore-cat-btn').forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.className = 'px-2.5 py-1 rounded-md bg-amber-600 font-medium text-white shadow-xs encore-cat-btn';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded-md bg-slate-100 font-medium text-slate-600 hover:bg-slate-200 encore-cat-btn';
+        }
+      });
+      renderEncoreLeadsList();
+    }
+
+    function renderEncoreLeadsList() {
+      const container = document.getElementById('encore-leads-list');
+      const countEl = document.getElementById('encore-leads-count');
+      if (!container || !encoreData.leads) return;
+
+      const filtered = encoreData.leads.filter(l => currentEncoreFilter === 'all' || l.category === currentEncoreFilter);
+      countEl.innerText = `${filtered.length} 家`;
+
+      container.innerHTML = filtered.map((l) => {
+        const originalIndex = encoreData.leads.indexOf(l);
+        const isSelected = originalIndex === currentEncoreLeadIndex;
+        return `
+          <div onclick="selectEncoreLead(${originalIndex})" class="p-3 rounded-lg border transition cursor-pointer ${isSelected ? 'bg-amber-50/60 border-amber-400 shadow-xs' : 'bg-slate-50/70 border-slate-200 hover:border-slate-300'}">
+            <div class="flex items-center justify-between mb-1">
+              <div class="font-bold text-xs text-slate-800 truncate">${l.company}</div>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.category.includes('阿联酋') ? 'bg-emerald-50 text-emerald-700' : l.category.includes('沙特') ? 'bg-indigo-50 text-indigo-700' : 'bg-purple-50 text-purple-700'}">${l.city}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 font-mono mb-1">${l.email}</div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">
+              <span class="truncate max-w-[170px]" title="${l.project_reference}"><i class="fa-solid fa-briefcase mr-1"></i>${l.project_reference}</span>
+              <span class="text-amber-700 font-semibold shrink-0">${l.recommended_product}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectEncoreLead(idx) {
+      currentEncoreLeadIndex = idx;
+      renderEncoreLeadsList();
+      renderEncorePreview();
+    }
+
+    function setEncorePreviewStep(step) {
+      currentEncoreStep = step;
+      [1, 2, 3, 4].forEach(s => {
+        const pill = document.getElementById(`step-pill-${s}`);
+        if (s === step) {
+          pill.className = 'px-2.5 py-1 rounded-md bg-white text-slate-800 shadow-xs';
+        } else {
+          pill.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800';
+        }
+      });
+      renderEncorePreview();
+    }
+
+    async function renderEncorePreview() {
+      if (!encoreData.leads || encoreData.leads.length === 0) return;
+      try {
+        const res = await fetch(`/api/encore/preview_rich?lead_index=${currentEncoreLeadIndex}&step=${currentEncoreStep}`);
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+          const l = d.lead;
+          document.getElementById('preview-company-title').innerText = l.company;
+          document.getElementById('preview-email-tag').innerText = l.email;
+          document.getElementById('preview-to-display').innerText = `${l.first_name || ''} <${l.email}> (${l.company})`;
+          document.getElementById('preview-meta-desc').innerText = `背景: ${l.project_reference} | 推荐产品: ${l.recommended_product} (${l.country})`;
+          document.getElementById('preview-subject-text').innerText = d.subject;
+          document.getElementById('preview-body-text').innerText = d.body;
+
+          // 动态图片与工程卡片展示
+          const productWrap = document.getElementById('preview-product-banner-wrap');
+          const productImg = document.getElementById('preview-product-banner-img');
+          const productCaption = document.getElementById('preview-product-caption');
+          const caseWrap = document.getElementById('preview-case-banner-wrap');
+
+          if (d.step_number === 2 && d.product_image) {
+            productImg.src = d.product_image;
+            productCaption.innerHTML = `<i class="fa-solid fa-camera text-brand-600 mr-1"></i> ${l.recommended_product} 官方推荐插图 / 邮签 Banner`;
+            productWrap.classList.remove('hidden');
+            caseWrap.classList.add('hidden');
+          } else if (d.step_number === 3) {
+            productWrap.classList.add('hidden');
+            caseWrap.classList.remove('hidden');
+          } else {
+            productWrap.classList.add('hidden');
+            caseWrap.classList.add('hidden');
+          }
+
+          const badge = document.getElementById('preview-step-badge');
+          if (d.step_number === 1) {
+            badge.innerHTML = '<i class="fa-solid fa-feather mr-1"></i>Step 1 纯文本轻量破冰 · 痛点疑问开场 (保证进箱率)';
+            badge.className = 'text-[11px] text-sky-600 font-semibold';
+          } else if (d.step_number === 2) {
+            badge.innerHTML = '<i class="fa-solid fa-bolt mr-1"></i>Step 2 AIDA 单品方案 · 高清配图 + 规格卖点 + 样品号召';
+            badge.className = 'text-[11px] text-amber-600 font-semibold';
+          } else if (d.step_number === 3) {
+            badge.innerHTML = '<i class="fa-solid fa-trophy mr-1"></i>Step 3 真实案例背书 · Nike连锁店/展厅工程背书';
+            badge.className = 'text-[11px] text-indigo-600 font-semibold';
+          } else {
+            badge.innerHTML = '<i class="fa-solid fa-handshake mr-1"></i>Step 4 优雅收尾 · 询问采购负责人/转介绍';
+            badge.className = 'text-[11px] text-slate-500 font-semibold';
+          }
+        }
+      } catch (e) {
+        console.error('Failed to preview encore:', e);
+      }
+    }
+
+    function launchMailMasterCurrent() {
+      const email = document.getElementById('preview-email-tag').innerText.trim();
+      const subject = document.getElementById('preview-subject-text').innerText.trim();
+      const body = document.getElementById('preview-body-text').innerText.trim();
+
+      if (!email) return alert('收件人邮箱不能为空！');
+
+      // 1. 原生浏览器安全唤起网易邮箱大师 / 本机邮件客户端
+      const mailtoUrl = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      if (mailtoUrl.length < 1800) {
+        window.location.href = mailtoUrl;
+      } else {
+        // 若正文过长 (超出 Windows mailto 协议限制)，先复制全文到剪贴板，再拉起邮件客户端写信窗口
+        navigator.clipboard.writeText(body).then(() => {
+          window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}`;
+          alert(`🚀 已为您成功唤起邮件客户端！\n收件人: ${email}\n主题: ${subject}\n\n⚠️ 由于邮件文案与参数较长，正文全文已自动复制到您的剪贴板，请直接在写信正文按 Ctrl+V 粘贴即可！`);
+        }).catch(() => {
+          window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}`;
+        });
+      }
+
+      // 2. 异步向后台记录调用 (静默通知，避免任何 JSON 报错阻断前端)
+      fetch('/api/encore/launch_mailmaster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, subject, body })
+      }).catch(() => {});
+    }
+
+    function copyPreviewContent() {
+      const subject = document.getElementById('preview-subject-text').innerText;
+      const body = document.getElementById('preview-body-text').innerText;
+      const fullText = `Subject: ${subject}\n\n${body}`;
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert('✅ 邮件全文（含主题与正文）已复制到剪贴板！');
+      }).catch(err => {
+        alert('复制失败，请手动选择复制');
+      });
+    }
+
+    async function importEncoreLeadsToMain() {
+      if (!confirm('确定将这批 Encore 精选买家（中东 & LiGHT26）批量导入到系统的客户线索库中吗？')) return;
+      try {
+        const res = await fetch('/api/encore/import_to_leads', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) {
+          alert('🎉 ' + json.message);
+          loadDashboard();
+        } else {
+          alert('导入失败: ' + json.error);
+        }
+      } catch (e) {
+        alert('导入异常: ' + e);
+      }
+    }
+
   </script>
 </body>
 </html>

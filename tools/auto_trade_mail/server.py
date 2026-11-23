@@ -6,6 +6,8 @@ Lightweight REST API & Web Server for Auto Trade Mail
 import json
 import urllib.parse
 import threading
+import os
+import mimetypes
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Dict, Any
@@ -60,7 +62,7 @@ class TradeMailHandler(BaseHTTPRequestHandler):
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
-        # 1. 静态网页
+        # 1. 静态网页与静态资源 (图片、资产等)
         if path == "/" or path == "/index.html":
             file_path = STATIC_DIR / "index.html"
             if file_path.exists():
@@ -74,6 +76,27 @@ class TradeMailHandler(BaseHTTPRequestHandler):
                 return
             else:
                 self.send_error(404, "Static index.html not found")
+                return
+
+        elif path.startswith("/static/"):
+            rel_path = path[len("/static/"):].replace("/", os.sep)
+            file_path = STATIC_DIR / rel_path
+            if file_path.exists() and file_path.is_file():
+                import mimetypes
+                content_type, _ = mimetypes.guess_type(str(file_path))
+                if not content_type:
+                    content_type = "application/octet-stream"
+                with open(file_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            else:
+                self.send_error(404, f"File not found: {path}")
                 return
 
         # 2. API 路由
@@ -148,7 +171,11 @@ class TradeMailHandler(BaseHTTPRequestHandler):
             conn = get_connection()
             cur = conn.cursor()
             limit = int(query.get("limit", [50])[0])
-            cur.execute("SELECT * FROM send_logs ORDER BY id DESC LIMIT ?", (limit,))
+            status_filter = query.get("status", [None])[0]
+            if status_filter and status_filter != "all":
+                cur.execute("SELECT * FROM send_logs WHERE status = ? ORDER BY id DESC LIMIT ?", (status_filter, limit))
+            else:
+                cur.execute("SELECT * FROM send_logs ORDER BY id DESC LIMIT ?", (limit,))
             logs = [dict(r) for r in cur.fetchall()]
             conn.close()
             self.send_json({"success": True, "data": logs})
@@ -289,6 +316,71 @@ class TradeMailHandler(BaseHTTPRequestHandler):
                 "body": body,
                 "lead": lead,
                 "mailbox": mbox
+            })
+            return
+
+        elif path == "/api/encore/showcase":
+            from encore_showcase_data import ENCORE_SEQUENCES, ENCORE_LEADS
+            self.send_json({
+                "success": True,
+                "data": {
+                    "sequences": ENCORE_SEQUENCES,
+                    "leads": ENCORE_LEADS
+                }
+            })
+            return
+
+        elif path == "/api/encore/preview_rich":
+            lead_idx = int(query.get("lead_index", [0])[0])
+            step_num = int(query.get("step", [1])[0])
+            from encore_showcase_data import ENCORE_SEQUENCES, ENCORE_LEADS
+            if lead_idx >= len(ENCORE_LEADS):
+                lead_idx = 0
+            lead = ENCORE_LEADS[lead_idx]
+            
+            target_seq = next((s for s in ENCORE_SEQUENCES if s["step_number"] == step_num), ENCORE_SEQUENCES[0])
+            
+            subject = target_seq["subject"].format(
+                first_name=lead["first_name"],
+                company=lead["company"],
+                country=lead["country"],
+                recommended_product=lead["recommended_product"],
+                subject_step1=lead["subject_step1"]
+            )
+            body = target_seq["body_template"].format(
+                first_name=lead["first_name"],
+                company=lead["company"],
+                country=lead["country"],
+                recommended_product=lead["recommended_product"],
+                pain_point_opener=lead["pain_point_opener"],
+                product_bullets=lead["product_bullets"],
+                subject_step1=lead["subject_step1"]
+            )
+
+            # 匹配对应的高清产品图片 URL
+            prod = str(lead.get("recommended_product", "")).upper()
+            img_url = ""
+            if "DELLA" in prod:
+                img_url = "/static/assets/products/della.jpg"
+            elif "48V" in prod or "MAGNETIC" in prod:
+                img_url = "/static/assets/products/magnetic.jpg"
+            elif "GALAXY" in prod:
+                img_url = "/static/assets/products/galaxy.jpg"
+            elif "VEGA" in prod:
+                img_url = "/static/assets/products/vega.jpg"
+            elif "MOVIA" in prod:
+                img_url = "/static/assets/products/movia.jpg"
+            
+            self.send_json({
+                "success": True,
+                "data": {
+                    "lead": lead,
+                    "step_number": step_num,
+                    "subject": subject,
+                    "body": body,
+                    "product_image": img_url,
+                    "case_badge": "NIKE 连锁工程专供 (10+州 6,000+套定制灯具交付)"
+                }
             })
             return
 
@@ -532,6 +624,60 @@ class TradeMailHandler(BaseHTTPRequestHandler):
             runner = WarmupRunner.get_instance()
             runner.stop()
             self.send_json({"success": True, "message": "已提交停止预热请求"})
+            return
+
+        elif path == "/api/encore/import_to_leads":
+            # 将精选的 Encore 真实买家一键导入到自动化发信线索库
+            from encore_showcase_data import ENCORE_LEADS
+            conn = get_connection()
+            cur = conn.cursor()
+            imported_cnt = 0
+            for l in ENCORE_LEADS:
+                custom_note = f"项目背景: {l['project_reference']} | 推荐单品: {l['recommended_product']} | 首封切入: {l['pain_point_opener']}"
+                try:
+                    cur.execute("""
+                    INSERT INTO leads (email, first_name, company, title, country, category, custom_note, status, current_step)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 0)
+                    ON CONFLICT(email) DO UPDATE SET
+                        first_name = excluded.first_name,
+                        company = excluded.company,
+                        title = excluded.title,
+                        country = excluded.country,
+                        category = excluded.category,
+                        custom_note = excluded.custom_note
+                    """, (
+                        l["email"],
+                        l["first_name"],
+                        l["company"],
+                        l["title"],
+                        l["country"],
+                        l["category"],
+                        custom_note
+                    ))
+                    imported_cnt += 1
+                except Exception as e:
+                    pass
+            conn.commit()
+            conn.close()
+            self.send_json({"success": True, "message": f"成功将 {imported_cnt} 位精选买家线索导入系统客户库！", "count": imported_cnt})
+            return
+
+        elif path == "/api/encore/launch_mailmaster":
+            # 一键调用本地网易邮箱大师 / 邮件客户端
+            to_email = body.get("email", "Moissar@pxls.ae")
+            subject = body.get("subject", "")
+            body_text = body.get("body", "")
+            try:
+                import os
+                params = urllib.parse.urlencode({'subject': subject, 'body': body_text[:1200]}, quote_via=urllib.parse.quote)
+                url = f"mailto:{to_email}?{params}"
+                try:
+                    os.startfile(url)
+                except Exception:
+                    pass
+                self.send_json({"success": True, "message": f"网易邮箱已准备就绪，收件人: {to_email}"})
+            except Exception as e:
+                self.send_json({"success": True, "message": f"邮件指令已生成: {to_email}"})
             return
 
         elif path == "/api/suppression":

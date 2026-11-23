@@ -273,9 +273,9 @@ def execute_warmup_task(
                 
                 # 记录到系统发信日志中标记为 warmup
                 cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, status, error_message)
-                VALUES (0, ?, ?, ?, 99, ?, 'warmup', '')
-                """, (dest_email, mbox["id"], mbox["email"], subject))
+                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                VALUES (0, ?, ?, ?, 99, ?, ?, 'warmup', '')
+                """, (dest_email, mbox["id"], mbox["email"], subject, body))
                 # 消耗一次发件箱额度
                 cur.execute("UPDATE mailboxes SET sent_today = sent_today + 1 WHERE id = ?", (mbox["id"],))
                 conn.commit()
@@ -289,9 +289,9 @@ def execute_warmup_task(
                 runner.current_job["failed"] += 1
                 runner.log(f"❌ [发送失败] {dest_email} 原因: {err}", "ERROR")
                 cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, status, error_message)
-                VALUES (0, ?, ?, ?, 99, ?, 'failed', ?)
-                """, (dest_email, mbox["id"], mbox["email"], subject, err))
+                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                VALUES (0, ?, ?, ?, 99, ?, ?, 'failed', ?)
+                """, (dest_email, mbox["id"], mbox["email"], subject, body, err))
                 conn.commit()
 
     conn.close()

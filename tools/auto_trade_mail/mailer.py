@@ -372,9 +372,9 @@ def execute_campaign(step_number: int, dry_run: bool = True, target_lead_ids: Op
             
             # 记录日志
             cur.execute("""
-            INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, status, error_message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, status, err_msg))
+            INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, rendered_body, status, err_msg))
             
             # 在演练中更新 current_step 和 last_sent_at
             now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -400,9 +400,9 @@ def execute_campaign(step_number: int, dry_run: bool = True, target_lead_ids: Op
                 cur.execute("UPDATE leads SET current_step = ?, last_sent_at = ? WHERE id = ?", (step_number, now_str, lead["id"]))
                 # 记录日志
                 cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, status, error_message)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, "success", ""))
+                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, rendered_body, "success", ""))
                 conn.commit()
 
                 # 发信安全防风控延迟（在 min_delay 和 max_delay 之间随机等待）
@@ -414,9 +414,9 @@ def execute_campaign(step_number: int, dry_run: bool = True, target_lead_ids: Op
                 runner.log(f"[Failed] {lead['email']} error: {msg}", "ERROR")
                 runner.current_job["failed"] += 1
                 cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, status, error_message)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, "failed", msg))
+                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (lead["id"], lead["email"], mailbox["id"], mailbox["email"], step_number, rendered_subject, rendered_body, "failed", msg))
                 conn.commit()
 
     if runner.current_job["status"] != "stopped":

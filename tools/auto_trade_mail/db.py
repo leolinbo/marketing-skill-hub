@@ -81,11 +81,17 @@ def init_db():
         mailbox_email TEXT,
         step_number INTEGER,
         subject TEXT,
-        status TEXT, -- success, failed, dry_run
+        body TEXT DEFAULT '',
+        status TEXT, -- success, failed, dry_run, warmup
         error_message TEXT DEFAULT '',
         sent_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
     """)
+    # 动态补充 body 字段 (如果老表存在但缺少 body 字段)
+    cur.execute("PRAGMA table_info(send_logs)")
+    send_log_cols = [c[1] for c in cur.fetchall()]
+    if "body" not in send_log_cols:
+        cur.execute("ALTER TABLE send_logs ADD COLUMN body TEXT DEFAULT ''")
 
     # 5. 黑名单与退订表 (Suppression List)
     cur.execute("""
