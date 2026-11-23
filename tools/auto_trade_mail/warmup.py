@@ -78,8 +78,8 @@ class WarmupRunner:
         self.stop_requested = True
         self.log("收到停止预热指令，当前单封发完后将自动终止...", "WARN")
 
-def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, body_text: str) -> Tuple[bool, str]:
-    """发送一封预热邮件"""
+def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, body_text: str, max_retries: int = 3) -> Tuple[bool, str]:
+    """发送一封预热邮件 (带抗丢包智能重试)"""
     host = mailbox["smtp_host"]
     port = int(mailbox["smtp_port"])
     ssl_mode = mailbox.get("ssl_mode", "starttls").lower()
@@ -98,36 +98,42 @@ def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, bod
     # 预热邮件使用自然纯文本，进箱率最高
     msg.attach(MIMEText(body_text, "plain", "utf-8"))
 
-    try:
-        if ssl_mode == "ssl":
-            context = ssl.create_default_context()
-            server = smtplib.SMTP_SSL(host, port, context=context, timeout=20)
-        else:
-            server = smtplib.SMTP(host, port, timeout=20)
-            server.ehlo()
-            if ssl_mode == "starttls":
+    last_error = ""
+    for attempt in range(1, max_retries + 1):
+        try:
+            if ssl_mode == "ssl":
                 context = ssl.create_default_context()
-                server.starttls(context=context)
+                server = smtplib.SMTP_SSL(host, port, context=context, timeout=25)
+            else:
+                server = smtplib.SMTP(host, port, timeout=25)
                 server.ehlo()
+                if ssl_mode == "starttls":
+                    context = ssl.create_default_context()
+                    server.starttls(context=context)
+                    server.ehlo()
 
-        if auth_type == "oauth2":
-            token, err = get_token_for_mailbox(mailbox)
-            if err or not token:
-                server.quit()
-                return False, f"OAuth Token 错误: {err}"
-            auth_str = generate_xoauth2_string(mailbox["email"], token)
-            code, resp = server.docmd("AUTH", "XOAUTH2 " + auth_str)
-            if code != 235:
-                server.quit()
-                return False, f"XOAUTH2 失败 ({code}): {resp.decode('utf-8', 'ignore')}"
-        else:
-            server.login(username, password)
+            if auth_type == "oauth2":
+                token, err = get_token_for_mailbox(mailbox)
+                if err or not token:
+                    server.quit()
+                    return False, f"OAuth Token 错误: {err}"
+                auth_str = generate_xoauth2_string(mailbox["email"], token)
+                code, resp = server.docmd("AUTH", "XOAUTH2 " + auth_str)
+                if code != 235:
+                    server.quit()
+                    return False, f"XOAUTH2 失败 ({code}): {resp.decode('utf-8', 'ignore')}"
+            else:
+                server.login(username, password)
 
-        server.sendmail(mailbox["email"], [to_email], msg.as_string())
-        server.quit()
-        return True, "Delivered"
-    except Exception as e:
-        return False, str(e)
+            server.sendmail(mailbox["email"], [to_email], msg.as_string())
+            server.quit()
+            return True, "Delivered"
+        except Exception as e:
+            last_error = str(e)
+            if attempt < max_retries:
+                time.sleep(2)  # 遇到国内网络瞬时丢包，间隔 2 秒重试
+
+    return False, last_error
 
 def execute_warmup_task(target_emails: List[str], count_per_mailbox: int = 2, min_delay: int = 25, max_delay: int = 50):
     """
