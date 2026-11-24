@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🇸🇬 新加坡商业照明买家与工程指定端直达工作台 (20家规划版) - Bob 专属</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --email-accent: #818cf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --sg-red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+    .header { max-width: 1350px; margin: 0 auto 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 24px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .badge-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge { background: #0369a1; color: #e0f2fe; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+    .badge-red { background: #991b1b; color: #fee2e2; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+    .badge-purple { background: #4f46e5; color: #e0e7ff; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+    .badge-green { background: #059669; color: #ecfdf5; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+
+    .section-title { max-width: 1350px; margin: 24px auto 14px; font-size: 18px; color: var(--accent); display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--accent); padding-left: 12px; }
+    .container { max-width: 1350px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 18px; }
+    @media(min-width: 980px) { .container { grid-template-columns: 1fr 1fr; } }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.15s, border-color 0.15s; }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-top { margin-bottom: 10px; }
+    .card-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; }
+    .card-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .card-meta { font-size: 12px; color: #cbd5e1; background: #0f172a80; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #64748b; line-height: 1.6; }
+
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 6px; text-decoration: none; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: #0284c7; color: #fff; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-ig { background: #e1306c; color: #fff; }
+    .btn-ig:hover { background: #c13584; }
+    .btn-comment { background: #f59e0b; color: #000; font-weight: 700; }
+    .btn-comment:hover { background: #d97706; color: #fff; }
+    .btn-email-direct { background: #6366f1; color: #fff; font-weight: 700; }
+    .btn-email-direct:hover { background: #4f46e5; }
+    .btn-wa { background: #25d366; color: #fff; }
+    .btn-wa:hover { background: #128c7e; }
+
+    /* Outreach Boxes */
+    .msg-box { margin-bottom: 12px; }
+    .msg-header { font-size: 12px; font-weight: 700; color: #94a3b8; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .msg-preview { background: #0b1120; border: 1px dashed #334155; border-radius: 6px; padding: 10px; font-size: 12.5px; color: #cbd5e1; position: relative; max-height: 95px; overflow-y: auto; white-space: pre-wrap; font-family: inherit; line-height: 1.45; }
+
+    /* Email Box Distinct Style */
+    .email-box { background: #13172c; border: 1px solid #3730a3; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .email-box-header { font-size: 12.5px; font-weight: 700; color: #a5b4fc; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .email-subject { background: #0b0f19; border: 1px solid #4338ca; border-radius: 4px; padding: 6px 10px; font-size: 12px; color: #e0e7ff; margin-bottom: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .email-body { background: #0b0f19; border: 1px dashed #4338ca; border-radius: 4px; padding: 10px; font-size: 12px; color: #c7d2fe; max-height: 125px; overflow-y: auto; white-space: pre-wrap; line-height: 1.45; }
+    .email-btn-group { display: flex; gap: 8px; margin-top: 8px; }
+
+    .btn-copy-dual { width: 100%; display: flex; justify-content: center; align-items: center; gap: 6px; padding: 7px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s; margin-top: 4px; }
+    .btn-copy-dm { background: #334155; color: #e2e8f0; }
+    .btn-copy-dm:hover { background: #475569; color: #fff; }
+    .btn-copy-cm { background: #451a03; color: #fdba74; border: 1px solid #78350f; }
+    .btn-copy-cm:hover { background: #78350f; color: #ffedd5; }
+    .btn-copy-em { background: #312e81; color: #e0e7ff; border: 1px solid #4338ca; padding: 6px; flex: 1; }
+    .btn-copy-em:hover { background: #4338ca; }
+    .copied { background: var(--success) !important; color: #fff !important; border: none !important; }
+
+    /* Placeholder Slots for 2-20 */
+    .placeholder-card { background: #131d3180; border: 1px dashed #334155; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #64748b; min-height: 220px; }
+    .placeholder-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.6; }
+    .placeholder-title { font-size: 15px; font-weight: 600; color: #94a3b8; margin-bottom: 4px; }
+    .placeholder-desc { font-size: 12px; color: #64748b; max-width: 320px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>🇸🇬 新加坡商业照明买家与工程指定端直达工作台</h1>
+      <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">发送人: <strong>Bob</strong> | 规划: <strong>新加坡核心商照与设计工程商 20 家</strong> (首发第 1 家已入库) | 标配：<strong>邮件直发 + 私信话术 + WhatsApp 直联 + 官网原帖</strong></p>
+    </div>
+    <div class="badge-group">
+      <span class="badge-red">🇸🇬 新加坡 20 家专项规划</span>
+      <span class="badge">🏢 马里士他路核心圈</span>
+      <span class="badge-purple">📧 含决策人/官方邮箱</span>
+      <span class="badge-green">💬 含 WhatsApp 电话</span>
+    </div>
+  </div>
+
+  <div class="section-title">🇸🇬 新加坡核心商业照明买家库（第 1 家已深度背调并入库 · 持续更新）</div>
+  <div class="container">
+
+    <!-- SG-1: Light-Pro Furnishings Pte Ltd -->
+    <div class="card">
+      <div class="card-top">
+        <div class="card-title">
+          <span>1. Light-Pro Furnishings Pte Ltd</span>
+          <span style="font-size:12px; color:#38bdf8;">新加坡马里士他路 · 30年资深工程商</span>
+        </div>
+        <div class="card-subtitle">展厅: 341 Balestier Road #01-02 | 施华洛世奇独家伙伴 | light-pro.com</div>
+        <div class="card-meta">
+          <strong>真实项目与定位：</strong>1990年创立，深耕新加坡30余年。代理 Swarovski、David Trubridge、Possoni 等欧洲一线；深耕高端商业办公、精品餐饮零售及奢华私宅全案；精通磁吸轨道系统（Magnetic Track）与深防眩建筑筒灯。<br>
+          <strong>匹配 Encore 拳头：</strong>48V 极简超薄磁吸轨道系统 (5.5mm极窄边框) + DELLA 模块化防眩筒灯 (UGR&lt;16, CRI 95+)。
+        </div>
+
+        <div class="btn-group">
+          <a class="btn btn-email-direct" href="mailto:eSupport@light-pro.com?subject=Attn%3A%20Project%20%2F%20Procurement%20Lead%20%E2%80%94%20Slim%2048V%20magnetic%20track%20%26%20architectural%20downlights%20for%20Singapore%20fit-outs&body=Hi%20Light-Pro%20team%2C%0A%0ASaw%20Light-Pro's%20architectural%20lighting%20portfolio%20on%20Balestier%20Road%E2%80%94especially%20your%20extensive%20work%20integrating%20magnetic%20track%20systems%20and%20minimal%20fixtures%20into%20high-end%20Singapore%20residences%2C%20commercial%20offices%2C%20and%20dining%20spaces.%0A%0AAt%20ENCORE%20Lighting%2C%20we%20engineer%20specification-grade%20commercial%20fixtures%20in%20Shenzhen%E2%80%94featuring%20ultra-slim%2048V%20magnetic%20track%20extrusions%20(5.5mm%20visible%20profile)%20and%20modular%20anti-glare%20downlights%20(UGR%3C16%2C%20CRI%2095%2B%2C%20DALI-2%20compliant)%20engineered%20specifically%20for%20flexible%20commercial%20turnovers.%0A%0AWould%20a%20digital%20cut%20sheet%20and%20IES%20files%20be%20helpful%20for%20your%20upcoming%20Singapore%20schemes%3F%0A%0ABest%20regards%2C%0A%0ABob%0AENCORE%20Lighting%0Asales%40encore-tech.com%20%7C%20%2B852%206768%202519%20%7C%20encore-tech.com">📧 唤起邮件直发</a>
+          <a class="btn btn-wa" href="https://wa.me/6568982555" target="_blank">💬 WhatsApp (+65 6898 2555)</a>
+          <a class="btn btn-primary" href="https://light-pro.com" target="_blank">🌐 官网直达</a>
+          <a class="btn btn-ig" href="https://www.instagram.com/" target="_blank">📷 关联 IG 触达</a>
+        </div>
+
+        <!-- 邮件专属框 -->
+        <div class="email-box">
+          <div class="email-box-header">
+            <span>📧 官方/采购邮箱: eSupport@light-pro.com</span>
+            <span style="font-size:11px; color:#c7d2fe;">Attn: Architectural Lighting Sourcing Lead</span>
+          </div>
+          <div class="email-subject" id="sg-sub-1">Attn: Project / Procurement Lead — Slim 48V magnetic track & architectural downlights for Singapore fit-outs</div>
+          <div class="email-body" id="sg-em-1">Hi Light-Pro team,
+
+Saw Light-Pro's architectural lighting portfolio on Balestier Road—especially your extensive work integrating magnetic track systems and minimal fixtures into high-end Singapore residences, commercial offices, and dining spaces.
+
+At ENCORE Lighting, we engineer specification-grade commercial fixtures in Shenzhen—featuring ultra-slim 48V magnetic track extrusions (5.5mm visible profile) and modular anti-glare downlights (UGR&lt;16, CRI 95+, DALI-2 compliant) engineered specifically for flexible commercial turnovers.
+
+Would a digital cut sheet and IES files be helpful for your upcoming Singapore schemes?
+
+Best regards,
+
+Bob
+ENCORE Lighting
+sales@encore-tech.com | +852 6768 2519 | encore-tech.com</div>
+          <div class="email-btn-group">
+            <button class="btn-copy-dual btn-copy-em" onclick="copyText('sg-sub-1', this)">📋 复制邮件主题</button>
+            <button class="btn-copy-dual btn-copy-em" onclick="copyText('sg-em-1', this)">📋 复制邮件正文</button>
+          </div>
+        </div>
+
+        <!-- 私信框 -->
+        <div class="msg-box">
+          <div class="msg-header"><span>✉️ IG 私信话术 (DM · 1-2句/同行探讨/不提推销/落款Bob)</span></div>
+          <div class="msg-preview" id="sg-dm-1">Loved the clean lighting and fixture curation at your Balestier Road showroom. For commercial & retail projects in Singapore, are designers shifting more towards ultra-slim 48V magnetic track for flexible re-aiming? — Bob</div>
+          <button class="btn-copy-dual btn-copy-dm" onclick="copyText('sg-dm-1', this)">📋 一键复制私信话术 (DM)</button>
+        </div>
+
+        <!-- 评论框 -->
+        <div class="msg-box">
+          <div class="msg-header"><span>💬 帖子公开评论 (Comment · 赞赏马里士他路展厅与灯光)</span></div>
+          <div class="msg-preview" id="sg-cm-1">Such refined light quality and minimal architectural integration! The clean line-of-sight on your interior schemes looks stunning. 👏💡</div>
+          <button class="btn-copy-dual btn-copy-cm" onclick="copyText('sg-cm-1', this)">📋 一键复制评论话术 (Comment)</button>
+        </div>
+
+        <!-- WhatsApp 框 -->
+        <div class="msg-box">
+          <div class="msg-header"><span>💬 WhatsApp 简短商务话术 (+65 6898 2555)</span></div>
+          <div class="msg-preview" id="sg-wa-1">Hi Light-Pro team, Bob here from ENCORE Lighting. Saw your architectural work on Balestier Road. When specifying magnetic track and anti-glare downlights for Singapore commercial projects, would our modular IES data and project sample kits be useful for your library?</div>
+          <button class="btn-copy-dual btn-copy-dm" onclick="copyText('sg-wa-1', this)">📋 一键复制 WhatsApp 话术</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder for SG-2 -->
+    <div class="placeholder-card">
+      <div class="placeholder-icon">🇸🇬 2</div>
+      <div class="placeholder-title">新加坡商照买家 2 号（待录入）</div>
+      <div class="placeholder-desc">正在通过 Instagram、新加坡建筑与室内设计协会（SIDS）及工程名录深度筛选匹配中...</div>
+    </div>
+
+    <!-- Placeholder for SG-3 to SG-20 Summary Card -->
+    <div class="placeholder-card" style="grid-column: 1 / -1;">
+      <div class="placeholder-icon">📋 3 ~ 20</div>
+      <div class="placeholder-title">新加坡 20 家商业照明买家专属储备槽位 (3 ~ 20 家)</div>
+      <div class="placeholder-desc">每筛选一家，均自动匹配：马里士他路/乌节路/中央商务区工程背景 + 真实项目对标 + AIDA高转化邮件 + 私信话术 + WhatsApp直达。</div>
+    </div>
+
+  </div>
+
+  <script>
+    function copyText(elementId, btn) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const text = el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '✅ 已成功复制！';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = oldText;
+          btn.classList.remove('copied');
+        }, 1800);
+      }).catch(err => {
+        alert('复制失败，请手动选择复制');
+      });
+    }
+  </script>
+</body>
+</html>

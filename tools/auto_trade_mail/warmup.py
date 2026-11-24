@@ -100,8 +100,8 @@ def get_mailboxes_warmup_status() -> List[Dict[str, Any]]:
     conn.close()
     return rows
 
-def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, body_text: str, max_retries: int = 3) -> Tuple[bool, str]:
-    """发送一封预热邮件 (带抗丢包智能连续重试)"""
+def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, body_text: str, max_retries: int = 4) -> Tuple[bool, str]:
+    """发送一封预热邮件 (带智能抗丢包重试与备选端口自适应)"""
     host = mailbox["smtp_host"]
     port = int(mailbox["smtp_port"])
     ssl_mode = mailbox.get("ssl_mode", "starttls").lower()
@@ -123,13 +123,20 @@ def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, bod
     last_error = ""
     for attempt in range(1, max_retries + 1):
         try:
-            if ssl_mode == "ssl":
+            # 策略：如果主选协议前两次均超时/失败，第3次起自动尝试 465 SSL 直连备选协议，强抗网络阻断
+            curr_port = port
+            curr_ssl = ssl_mode
+            if attempt >= 3 and "gmail" in host.lower():
+                curr_port = 465
+                curr_ssl = "ssl"
+
+            if curr_ssl == "ssl":
                 context = ssl.create_default_context()
-                server = smtplib.SMTP_SSL(host, port, context=context, timeout=25)
+                server = smtplib.SMTP_SSL(host, curr_port, context=context, timeout=30)
             else:
-                server = smtplib.SMTP(host, port, timeout=25)
+                server = smtplib.SMTP(host, curr_port, timeout=30)
                 server.ehlo()
-                if ssl_mode == "starttls":
+                if curr_ssl == "starttls":
                     context = ssl.create_default_context()
                     server.starttls(context=context)
                     server.ehlo()
@@ -153,7 +160,8 @@ def send_warmup_single(mailbox: Dict[str, Any], to_email: str, subject: str, bod
         except Exception as e:
             last_error = str(e)
             if attempt < max_retries:
-                time.sleep(2)  # 遇到丢包，间隔 2 秒重试
+                # 递增退避等待 3s, 6s...
+                time.sleep(attempt * 3)
 
     return False, last_error
 
@@ -256,45 +264,81 @@ def execute_warmup_task(
             if runner.stop_requested:
                 break
 
-            dest_email = random.choice(target_emails).strip()
-            topic = random.choice(topics_pool)
-            subject = topic["subject"]
-            body = f"{topic['body']}\n\n{mbox['sender_name']}\nEncore Lighting Team"
+            # 批次内发信与自动容错
+            max_item_attempts = 2  # 针对该封邮件自动再来一轮尝试
+            item_success = False
 
-            runner.current_job["current_action"] = f"{mbox['email']} ➔ {dest_email}"
-            runner.log(f"正在发送预热邮件: {mbox['email']} ➔ {dest_email} (主题: {subject})")
+            for item_try in range(1, max_item_attempts + 1):
+                if runner.stop_requested:
+                    break
 
-            ok, err = send_warmup_single(mbox, dest_email, subject, body)
-            runner.current_job["processed"] += 1
+                dest_email = random.choice(target_emails).strip()
+                topic = random.choice(topics_pool)
+                subject = topic["subject"]
+                body = f"{topic['body']}\n\n{mbox['sender_name']}\nEncore Lighting Team"
 
-            if ok:
-                runner.current_job["success"] += 1
-                runner.log(f"✅ [成功送达] {dest_email} (来自 {mbox['email']})", "SUCCESS")
-                
-                # 记录到系统发信日志中标记为 warmup
-                cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
-                VALUES (0, ?, ?, ?, 99, ?, ?, 'warmup', '')
-                """, (dest_email, mbox["id"], mbox["email"], subject, body))
-                # 消耗一次发件箱额度
-                cur.execute("UPDATE mailboxes SET sent_today = sent_today + 1 WHERE id = ?", (mbox["id"],))
-                conn.commit()
+                runner.current_job["current_action"] = f"{mbox['email']} ➔ {dest_email}"
+                if item_try > 1:
+                    runner.log(f"🔄 [自动容错触发] 检测到上一封网络抖动，正在免人工全自动尝试向 {dest_email} 发送预热...", "WARN")
+                else:
+                    runner.log(f"正在发送预热邮件: {mbox['email']} ➔ {dest_email} (主题: {subject})")
 
-                # 随机防风控间隔
-                if (runner.current_job["processed"] < total_to_send) and not runner.stop_requested:
-                    jitter = random.uniform(min_delay, max_delay)
-                    runner.log(f"模拟真人发信节奏：等待 {jitter:.1f} 秒后发送下一封...")
-                    time.sleep(jitter)
-            else:
-                runner.current_job["failed"] += 1
-                runner.log(f"❌ [发送失败] {dest_email} 原因: {err}", "ERROR")
-                cur.execute("""
-                INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
-                VALUES (0, ?, ?, ?, 99, ?, ?, 'failed', ?)
-                """, (dest_email, mbox["id"], mbox["email"], subject, body, err))
-                conn.commit()
+                ok, err = send_warmup_single(mbox, dest_email, subject, body)
+
+                if ok:
+                    item_success = True
+                    runner.current_job["processed"] += 1
+                    runner.current_job["success"] += 1
+                    runner.log(f"✅ [成功送达] {dest_email} (来自 {mbox['email']})", "SUCCESS")
+                    
+                    # 记录到系统发信日志中标记为 warmup
+                    cur.execute("""
+                    INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                    VALUES (0, ?, ?, ?, 99, ?, ?, 'warmup', '')
+                    """, (dest_email, mbox["id"], mbox["email"], subject, body))
+                    # 消耗一次发件箱额度
+                    cur.execute("UPDATE mailboxes SET sent_today = sent_today + 1 WHERE id = ?", (mbox["id"],))
+                    conn.commit()
+
+                    # 随机防风控间隔
+                    if (runner.current_job["processed"] < total_to_send) and not runner.stop_requested:
+                        jitter = random.uniform(min_delay, max_delay)
+                        runner.log(f"模拟真人发信节奏：等待 {jitter:.1f} 秒后发送下一封...")
+                        time.sleep(jitter)
+                    break
+                else:
+                    if item_try < max_item_attempts:
+                        runner.log(f"⚠️ [网络瞬断，系统将自动修复重试] 错误: {err}，系统等待 5 秒后免干预自动重发...", "WARN")
+                        time.sleep(5)
+                    else:
+                        runner.current_job["processed"] += 1
+                        runner.current_job["failed"] += 1
+                        runner.log(f"❌ [发送失败] {dest_email} 原因: {err}", "ERROR")
+                        cur.execute("""
+                        INSERT INTO send_logs (lead_id, lead_email, mailbox_id, mailbox_email, step_number, subject, body, status, error_message)
+                        VALUES (0, ?, ?, ?, 99, ?, ?, 'failed', ?)
+                        """, (dest_email, mbox["id"], mbox["email"], subject, body, err))
+                        conn.commit()
 
     conn.close()
     runner.current_job["status"] = "stopped" if runner.stop_requested else "finished"
     runner.log(f"🎉 本轮预热执行结束！成功送达: {runner.current_job['success']} 封, 失败: {runner.current_job['failed']} 封")
     runner.is_running = False
+
+    # 4. 全自动化守护：若本轮出现因网络波动导致失败且非人工手动终止，系统自动在 15 秒后静默差额补发
+    if runner.current_job["failed"] > 0 and not runner.stop_requested and mode == "smart":
+        runner.log(f"🤖 [自动补发守护启动] 检测到本轮有 {runner.current_job['failed']} 封因网络波动未成功，系统将在 15 秒后全自动静默补发至达标，无需人工干预...", "INFO")
+        def _auto_resume():
+            time.sleep(15)
+            execute_warmup_task(
+                target_emails=target_emails,
+                selected_mailbox_ids=selected_mailbox_ids,
+                mode="smart",
+                target_count=target_count,
+                min_delay=min_delay,
+                max_delay=max_delay,
+                custom_topics=custom_topics
+            )
+        import threading
+        t_resume = threading.Thread(target=_auto_resume, daemon=True)
+        t_resume.start()

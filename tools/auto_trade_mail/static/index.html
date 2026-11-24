@@ -673,11 +673,13 @@ jklvbn598j90@gmail.com
           </div>
 
           <!-- 分类筛选器 -->
-          <div class="flex gap-1.5 text-[11px]">
+          <div class="flex gap-1.5 text-[11px] flex-wrap">
             <button onclick="filterEncoreLeads('all')" class="px-2.5 py-1 rounded-md bg-slate-100 font-medium text-slate-700 hover:bg-slate-200 encore-cat-btn" data-cat="all">全部</button>
+            <button onclick="filterEncoreLeads('新加坡-商业工程')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="新加坡-商业工程">🇸🇬 新加坡</button>
             <button onclick="filterEncoreLeads('英国-第三轮')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="英国-第三轮">英国第三轮</button>
             <button onclick="filterEncoreLeads('中东-阿联酋')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="中东-阿联酋">阿联酋</button>
             <button onclick="filterEncoreLeads('中东-沙特')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="中东-沙特">沙特</button>
+            <button onclick="filterEncoreLeads('中东-综合工程')" class="px-2.5 py-1 rounded-md bg-slate-50 font-medium text-slate-600 hover:bg-slate-100 encore-cat-btn" data-cat="中东-综合工程">中东工程商</button>
           </div>
 
           <div class="space-y-2 max-h-[560px] overflow-y-auto pr-1" id="encore-leads-list">
@@ -2129,7 +2131,7 @@ buyer@client.com,David,Global Light,Germany,Observed your high-end project in Be
           <div onclick="selectEncoreLead(${originalIndex})" class="p-3 rounded-lg border transition cursor-pointer ${isSelected ? 'bg-amber-50/60 border-amber-400 shadow-xs' : 'bg-slate-50/70 border-slate-200 hover:border-slate-300'}">
             <div class="flex items-center justify-between mb-1">
               <div class="font-bold text-xs text-slate-800 truncate">${l.company}</div>
-              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.category.includes('阿联酋') ? 'bg-emerald-50 text-emerald-700' : l.category.includes('沙特') ? 'bg-indigo-50 text-indigo-700' : 'bg-purple-50 text-purple-700'}">${l.city}</span>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.category.includes('新加坡') ? 'bg-rose-50 text-rose-700 border border-rose-200' : l.category.includes('阿联酋') ? 'bg-emerald-50 text-emerald-700' : l.category.includes('沙特') ? 'bg-indigo-50 text-indigo-700' : l.category.includes('综合') ? 'bg-amber-50 text-amber-700' : 'bg-purple-50 text-purple-700'}">${l.city}</span>
             </div>
             <div class="text-[11px] text-slate-500 font-mono mb-1">${l.email}</div>
             <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-100">

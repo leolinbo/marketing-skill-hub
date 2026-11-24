@@ -8,8 +8,48 @@ from pathlib import Path
 
 DB_PATH = Path("d:/marketing/tools/auto_trade_mail/data/trade_mail.db")
 
-# 19 家真实买家完整画像
+# 真实买家完整画像 (含新加坡、英国、中东)
 TODAY_LEADS = [
+    # ================= 新加坡商业工程商 (Singapore Commercial Projects) =================
+    {
+        "email": "eSupport@light-pro.com",
+        "first_name": "Procurement Team",
+        "company": "Light-Pro Furnishings Pte Ltd",
+        "title": "Architectural Lighting Sourcing Lead",
+        "country": "Singapore",
+        "city": "Singapore (Balestier Rd)",
+        "category": "新加坡-商业工程",
+        "project_reference": "新加坡马里士他路30年资深工程商，Swarovski独家伙伴，精通磁吸轨道与高端防眩筒灯工程",
+        "recommended_product": "48V 磁吸轨道 / Magnetic",
+        "subject_step1": "Attn: Project / Sourcing Lead — Slim 48V magnetic track & anti-glare fixtures for Singapore schemes",
+        "pain_point_opener": "Saw Light-Pro's architectural lighting portfolio on Balestier Road—especially your extensive work integrating magnetic track systems and minimal fixtures into high-end Singapore residences, commercial offices, and dining spaces. When specifying modular track and deep-recessed fixtures for local project handovers, do clients frequently request ultra-slim profiles that can be re-positioned between seasons without ceiling re-work?",
+        "product_bullets": """Our Architectural 48V Low-Voltage Magnetic & Downlight System provides:
+• Ultra-Slim Ceiling Fit: Sleek 5.5mm visible track profile and miniature trimless downlights engineered for clean tropical architectural finishes.
+• Visual Comfort Optics: Certified UGR < 16 and CRI 95+ (R9 > 80) preserving true interior finishes without surface glare.
+• Full Dimming Protocol Compliance: Seamless integration with DALI-2, 0-10V, and smart wireless controls for commercial energy code compliance.
+• Factory-Direct Rapid Prototyping: 7-day fast dispatch for project sample mock-ups shipped directly from Shenzhen."""
+    },
+
+    # ================= 中东综合工程商 (Middle East General) =================
+    {
+        "email": "catra.office@gmail.com",
+        "first_name": "Catra Team",
+        "company": "Catra Group (CATRA)",
+        "title": "Engineering & Lighting Procurement Lead",
+        "country": "Middle East",
+        "city": "Tehran / Regional Office",
+        "category": "中东-综合工程",
+        "project_reference": "专注大型商业地下停车库连续线条照明 (8大实景案例) 及 Topmet 型材/Niviss 高端地埋代理",
+        "recommended_product": "ATRO 连续线条灯 / 48V 磁吸系统",
+        "subject_step1": "Saw your parking lighting portfolio — High-efficiency linear lighting schemes",
+        "pain_point_opener": "Saw your dedicated commercial parking lighting portfolio on catragroup.com — the continuous linear runs and clean vertical illuminance on the basement ramps look very well executed. On multi-tier commercial car parks, do project developers frequently demand batwing-distribution fixtures to eliminate harsh driver glare while maintaining high lumen maintenance in ambient heat?",
+        "product_bullets": """Our Continuous Commercial Linear Extrusion System provides:
+• Wide Batwing Beam Distribution: 120° x 90° optical lens maximizing fixture spacing and reducing total luminaire counts by 20%.
+• Heavy-Duty Heat Dissipation: 6063-T5 extruded aluminum housing maintaining LM-80 performance under 45°C ambient temperatures.
+• Continuous Quick-Connect Joinery: Tool-free mechanical latching supporting uninterrupted 50+ meter runs with internal through-wiring.
+• High Efficiency & Smart Control: Up to 140 lm/W system efficacy with microwave occupancy sensing and 0-10V/DALI emergency backup integration."""
+    },
+
     # ================= 英国第三轮 (UK Round 3) =================
     {
         "email": "contact@amdgb.com",
